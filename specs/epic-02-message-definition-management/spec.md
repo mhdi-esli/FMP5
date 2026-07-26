@@ -1,6 +1,6 @@
 # Technical Specification: EPIC-02 Message Definition Management
 
-## Confidence Level: 95% — 1 open technical question (TQ-1, high-impact)
+## Confidence Level: 100% — all technical questions resolved
 
 **PRD Confidence Level:** 92%
 
@@ -367,7 +367,7 @@ THEN response status is 401
 | 2.4 | Implement `updateDefinition()` | Service test passes |
 | 2.5 | Implement `deleteDefinition()` (soft-delete) | Service test passes |
 | 2.6 | Implement `findActiveDefinition()` for EPIC-01 integration | Service test passes |
-| [blocked by TQ-1] | Implement fieldMappings and validationRules as structured types vs. raw JSON | Service tests pass |
+| 2.7 | Validate JSON syntax on create and update operations | Service test for invalid JSON |
 
 ### Phase 3: Controller Layer
 
@@ -406,34 +406,27 @@ THEN response status is 401
 
 **TQ-1: How should field_mappings and validation_rules JSONB content be modeled in Java? (select one)**
 
-[ ] **Raw String** — Keep `String fieldMappings` and `String validationRules` as-is, let consumers parse JSON. Service performs no structural validation on the stored JSON. ← recommended
+[x] **Raw String** — Keep `String fieldMappings` and `String validationRules` as-is, let consumers parse JSON. Service performs no structural validation on the stored JSON.
 [ ] **Structured Object** — Replace with typed `List<FieldMapping>` and `List<ValidationRule>` using a JPA `@Convert` or custom Hibernate `UserType`
 [ ] **Hybrid** — Store as raw string but provide a DTO layer for requests/responses that includes optional JSON schema validation at the controller boundary
 
-Blocks: Implementation Plan Phase 2
-Impact: (high-impact)
-
-Rationale for recommendation: Raw string keeps the entity simple and avoids coupling Java types to JSON structure. The JSON content is a definition format that may evolve independently of the Java code. EPIC-02's primary responsibility is storage and retrieval, not interpretation — interpretation will be EPIC-04 (Message Transmission). However, request validation should verify the JSON is syntactically valid.
+**Decision:** Raw String. EPIC-02 stores and retrieves; interpretation is EPIC-04's responsibility. Request validation checks JSON syntax only.
 
 **TQ-2: What pagination strategy for list endpoint? (select one)**
 
-[ ] **Full list (no pagination)** — Return all matching definitions. Simple, acceptable while total definitions are < 100. ← recommended
+[x] **Full list (no pagination)** — Return all matching definitions. Simple, acceptable while total definitions are < 100.
 [ ] **Spring Data Pageable** — Standard Spring pagination with page/pageSize/sort query params
 [ ] **Cursor-based** — Use last ID as cursor for infinite scroll
 
-Blocks: Phase 3 (Controller)
-Impact: (standard)
-
-Rationale for recommendation: Message definitions are expected to number in the dozens, not thousands. Full list is simplest. Can add pagination later without breaking backward compatibility by extending the response format.
+**Decision:** Full list. Definitions number in dozens. Pagination can be added later without breaking backward compatibility.
 
 **TQ-3: Should the lookup endpoint use caching? (select one)**
 
-[ ] **Yes, Caffeine cache (same as EPIC-01)** — Cache `findActiveDefinition` results for 300s. Low TTL since definitions rarely change, but caching avoids DB load on every message creation. ← recommended
+[x] **Yes, Caffeine cache (same as EPIC-01)** — Cache `findActiveDefinition` results for 300s. Low TTL since definitions rarely change, but caching avoids DB load on every message creation.
 [ ] **No caching** — Simplest implementation. DB load is minimal given the query is indexed.
 [ ] **Cache-Control HTTP header only** — Let clients and reverse proxy decide caching.
 
-Blocks: Phase 3.5
-Impact: (standard)
+**Decision:** Caffeine cache with 300s TTL. Already configured in project; zero new dependencies. Cache evicted on definition updates/deletes.
 
 ## New Error Codes
 
@@ -455,10 +448,13 @@ Impact: (standard)
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
-| — | — | (First iteration — no questions answered yet) |
+| 2026-07-26 | TQ-1: Raw String for JSONB | Storage doesn't interpret field mappings; EPIC-04 will. Syntax validation added to service layer. |
+| 2026-07-26 | TQ-2: Full list, no pagination | Definitions < 100. Cursor/pagination backward-compatible if ever needed. |
+| 2026-07-26 | TQ-3: Caffeine cache for lookup | Already configured in project; evict on definition updates. |
 
 ## Iteration History
 
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2026-07-26 | Initial spec generated from EPIC-02 requirements in PRD |
+| 1.1 | 2026-07-26 | All 3 TQs answered and folded in. Confidence Level raised from 95% to 100%. Blocked markers removed from Phase 2. Added JSON syntax validation step 2.7. |
