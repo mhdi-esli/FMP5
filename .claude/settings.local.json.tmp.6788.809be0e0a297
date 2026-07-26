@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm config *)",
+      "Bash(python3 -c \"import docx; doc = docx.Document\\('docs/analyst-message-200-service.docx'\\); print\\('\\\\n'.join\\([p.text for p in doc.paragraphs]\\)\\)\")",
+      "Bash(unzip -p docs/analyst-message-200-service.docx word/document.xml)",
+      "Bash(python3 -c \"import docx; doc = docx.Document\\('docs/financial-Messaging-platform-mt200-technicalDocument.docx'\\); print\\('\\\\n'.join\\([p.text for p in doc.paragraphs]\\)\\)\")",
+      "Bash(unzip -p docs/financial-Messaging-platform-mt200-technicalDocument.docx word/document.xml)",
+      "Bash(mvn test *)",
+      "Bash(git init *)",
+      "Bash(git add *)"
+    ]
+  }
+}
