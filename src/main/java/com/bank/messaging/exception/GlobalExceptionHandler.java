@@ -1,5 +1,6 @@
 package com.bank.messaging.exception;
 
+import com.bank.messaging.dto.DefinitionErrorResponse;
 import com.bank.messaging.dto.MessageResponse;
 import com.bank.messaging.dto.ValidationError;
 import com.bank.messaging.enums.ErrorCode;
@@ -90,6 +91,45 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.badRequest().body(response);
+    }
+
+    /**
+     * Handle duplicate definition errors (MSG-008).
+     */
+    @ExceptionHandler(DuplicateDefinitionException.class)
+    public ResponseEntity<DefinitionErrorResponse> handleDuplicateDefinition(DuplicateDefinitionException ex) {
+        log.warn("Duplicate definition: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new DefinitionErrorResponse(
+                    ErrorCode.MSG_008.getCode(),
+                    ErrorCode.MSG_008.getPersianMessage()
+                ));
+    }
+
+    /**
+     * Handle definition not found errors (MSG-009).
+     */
+    @ExceptionHandler(DefinitionNotFoundException.class)
+    public ResponseEntity<DefinitionErrorResponse> handleDefinitionNotFound(DefinitionNotFoundException ex) {
+        log.warn("Definition not found: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new DefinitionErrorResponse(
+                    ErrorCode.MSG_009.getCode(),
+                    ErrorCode.MSG_009.getPersianMessage()
+                ));
+    }
+
+    /**
+     * Handle invalid JSON format errors.
+     */
+    @ExceptionHandler(InvalidJsonException.class)
+    public ResponseEntity<DefinitionErrorResponse> handleInvalidJson(InvalidJsonException ex) {
+        log.warn("Invalid JSON: {}", ex.getMessage());
+        return ResponseEntity.badRequest()
+                .body(new DefinitionErrorResponse(
+                    ErrorCode.MSG_001.getCode(),
+                    "Invalid JSON format: " + ex.getMessage()
+                ));
     }
 
     /**

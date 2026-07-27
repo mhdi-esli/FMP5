@@ -7,7 +7,6 @@ import com.bank.messaging.entity.MessageDefinitionMapping;
 import com.bank.messaging.enums.ErrorCode;
 import com.bank.messaging.enums.MessageStatus;
 import com.bank.messaging.enums.ValidationResultEnum;
-import com.bank.messaging.repository.MessageDefinitionMappingRepository;
 import com.bank.messaging.repository.MessageRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +40,7 @@ class MessageCreationServiceTest {
     private MessageValidationService validationService;
 
     @Mock
-    private MessageDefinitionMappingRepository messageDefinitionRepository;
+    private MessageDefinitionService messageDefinitionService;
 
     @Spy
     private ObjectMapper objectMapper = new ObjectMapper();
@@ -76,7 +75,7 @@ class MessageCreationServiceTest {
             MessageRequest request = validRequestBuilder.build();
 
             when(validationService.validate(any())).thenReturn(ValidationResult.success());
-            when(messageDefinitionRepository.findByMessageTypeAndNetworkAndIsActiveTrue("200", "SWIFT"))
+            when(messageDefinitionService.findActiveDefinition("200", "SWIFT"))
                 .thenReturn(Optional.of(MessageDefinitionMapping.builder()
                     .messageType("200")
                     .network("SWIFT")
@@ -106,7 +105,7 @@ class MessageCreationServiceTest {
             MessageRequest request = validRequestBuilder.build();
 
             when(validationService.validate(any())).thenReturn(ValidationResult.success());
-            when(messageDefinitionRepository.findByMessageTypeAndNetworkAndIsActiveTrue("200", "SWIFT"))
+            when(messageDefinitionService.findActiveDefinition("200", "SWIFT"))
                 .thenReturn(Optional.of(MessageDefinitionMapping.builder().build()));
             when(messageRepository.save(any())).thenAnswer(invocation -> {
                 Message msg = invocation.getArgument(0);
@@ -130,7 +129,7 @@ class MessageCreationServiceTest {
             MessageRequest request = validRequestBuilder.build();
 
             when(validationService.validate(any())).thenReturn(ValidationResult.success());
-            when(messageDefinitionRepository.findByMessageTypeAndNetworkAndIsActiveTrue("200", "SWIFT"))
+            when(messageDefinitionService.findActiveDefinition("200", "SWIFT"))
                 .thenReturn(Optional.of(MessageDefinitionMapping.builder().build()));
             when(messageRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -180,9 +179,9 @@ class MessageCreationServiceTest {
             MessageRequest request = validRequestBuilder.build();
 
             when(validationService.validate(any())).thenReturn(ValidationResult.success());
-            when(messageDefinitionRepository.findByMessageTypeAndNetworkAndIsActiveTrue("200", "SWIFT"))
+            when(messageDefinitionService.findActiveDefinition("200", "SWIFT"))
                 .thenReturn(Optional.empty());
-            when(messageDefinitionRepository.findByMessageTypeAndNetwork("200", "SWIFT"))
+            when(messageDefinitionService.findDefinition("200", "SWIFT"))
                 .thenReturn(Optional.empty());
             when(messageRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -202,9 +201,9 @@ class MessageCreationServiceTest {
             MessageRequest request = validRequestBuilder.build();
 
             when(validationService.validate(any())).thenReturn(ValidationResult.success());
-            when(messageDefinitionRepository.findByMessageTypeAndNetworkAndIsActiveTrue("200", "SWIFT"))
+            when(messageDefinitionService.findActiveDefinition("200", "SWIFT"))
                 .thenReturn(Optional.empty());
-            when(messageDefinitionRepository.findByMessageTypeAndNetwork("200", "SWIFT"))
+            when(messageDefinitionService.findDefinition("200", "SWIFT"))
                 .thenReturn(Optional.of(MessageDefinitionMapping.builder()
                     .messageType("200")
                     .network("SWIFT")

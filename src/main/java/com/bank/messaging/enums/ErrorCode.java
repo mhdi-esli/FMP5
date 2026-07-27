@@ -15,7 +15,9 @@ public enum ErrorCode {
     MSG_004("MSG-004", "Message Definition یافت نشد", "Message Definition not found"),
     MSG_005("MSG-005", "Message Definition غیرفعال است", "Message Definition inactive"),
     MSG_006("MSG-006", "اعتبارسنجی پیام ناموفق بود", "Message validation failed"),
-    MSG_007("MSG-007", "ایجاد پیام با خطا مواجه شد", "Message creation error");
+    MSG_007("MSG-007", "ایجاد پیام با خطا مواجه شد", "Message creation error"),
+    MSG_008("MSG-008", "تعریف پیام تکراری است", "Duplicate message definition"),
+    MSG_009("MSG-009", "تعریف پیام یافت نشد", "Message definition not found");
 
     private final String code;
     private final String persianMessage;

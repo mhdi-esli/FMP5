@@ -4,9 +4,7 @@ import com.bank.messaging.dto.MessageRequest;
 import com.bank.messaging.dto.MessageResponse;
 import com.bank.messaging.dto.ValidationError;
 import com.bank.messaging.entity.Message;
-import com.bank.messaging.entity.MessageDefinitionMapping;
 import com.bank.messaging.enums.*;
-import com.bank.messaging.repository.MessageDefinitionMappingRepository;
 import com.bank.messaging.repository.MessageRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,7 +31,7 @@ public class MessageCreationService {
 
     private final MessageRepository messageRepository;
     private final MessageValidationService validationService;
-    private final MessageDefinitionMappingRepository messageDefinitionRepository;
+    private final MessageDefinitionService messageDefinitionService;
     private final ObjectMapper objectMapper;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -80,13 +78,13 @@ public class MessageCreationService {
     }
 
     private ValidationResult validateMessageDefinition(String messageType, Network network) {
-        var definitionOpt = messageDefinitionRepository
-            .findByMessageTypeAndNetworkAndIsActiveTrue(messageType, network.name());
+        var definitionOpt = messageDefinitionService
+            .findActiveDefinition(messageType, network.name());
 
         if (definitionOpt.isEmpty()) {
             // Check if definition exists but is inactive
-            var anyDefinitionOpt = messageDefinitionRepository
-                .findByMessageTypeAndNetwork(messageType, network.name());
+            var anyDefinitionOpt = messageDefinitionService
+                .findDefinition(messageType, network.name());
 
             if (anyDefinitionOpt.isPresent()) {
                 log.warn("Message Definition inactive for type: {}, network: {}", messageType, network);
