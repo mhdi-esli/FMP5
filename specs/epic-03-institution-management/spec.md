@@ -1,6 +1,6 @@
 # Technical Specification: EPIC-03 Institution Management
 
-## Confidence Level: 72% — 2 open technical questions (TQ-1 high-impact, TQ-2 standard)
+## Confidence Level: 100% — all technical questions resolved
 
 **PRD Confidence Level:** 92%
 
@@ -403,25 +403,19 @@ THEN status is 401
 
 **TQ-1: Where should institution validation be called in the EPIC-01 message creation flow? (select one)**
 
-[ ] **In MessageCreationService** — Add institution validation call directly in `createMessage()`, after message definition validation. Keeps all validation calls in one service. ← recommended
+[x] **In MessageCreationService** — Add institution validation call directly in `createMessage()`, after message definition validation. Keeps all validation calls in one service.
 [ ] **In MessageValidationService** — Add institution validation alongside field-level validation. Keeps validation logic together.
 [ ] **As a separate validation step in MessageController** — Call InstitutionService from the controller before delegating to MessageCreationService.
 
-Blocks: Phase 5 (EPIC-01 Integration)
-Impact: (high-impact)
-
-Rationale for recommendation: Adding it to `MessageCreationService` is cleanest — the service already has `validateMessageDefinition()` as a private method. Adding `validateInstitution()` alongside it keeps the pattern consistent. `MessageValidationService` handles field-level syntax/format validation; institution existence is a business-level check that belongs in the message creation flow.
+**Decision:** In MessageCreationService. Adds `validateInstitution()` method alongside existing `validateMessageDefinition()`, keeping business validation in one layer.
 
 **TQ-2: Should the lookup endpoint use caching? (select one)**
 
-[ ] **Yes, Caffeine cache (same as EPIC-01/EPIC-02)** — Cache `findByInstitutionId` results for 300s ← recommended
+[x] **Yes, Caffeine cache (same as EPIC-01/EPIC-02)** — Cache `findByInstitutionId` results for 300s
 [ ] **No caching** — Institutions change rarely, DB query is indexed and fast
 [ ] **Cache-Control HTTP header only** — Let clients/reverse proxy decide
 
-Blocks: Phase 3
-Impact: (standard)
-
-Rationale for recommendation: Same pattern as EPIC-02's definition lookup. Institutions change rarely, and this endpoint is called on every message creation. Caffeine is already configured.
+**Decision:** Caffeine cache with 300s TTL. Same pattern as EPIC-02 definition lookup. Already configured in project.
 
 ## New Error Codes
 
@@ -443,10 +437,12 @@ Rationale for recommendation: Same pattern as EPIC-02's definition lookup. Insti
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
-| — | — | (First iteration — no questions answered yet) |
+| 2026-07-27 | TQ-1: Institution validation in MessageCreationService | Keeps business validation alongside existing `validateMessageDefinition()`. Consistent pattern. |
+| 2026-07-27 | TQ-2: Caffeine cache for lookup endpoint | Same pattern as EPIC-02. Already configured in project. |
 
 ## Iteration History
 
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2026-07-27 | Initial spec generated from EPIC-03 requirements in PRD |
+| 1.1 | 2026-07-27 | All 2 TQs answered and folded in. Confidence Level raised from 72% to 100%. |
