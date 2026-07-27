@@ -28,6 +28,33 @@ class ErrorCodeTest {
     }
 
     @Test
+    void msg010_codeAndMessages_shouldExist() {
+        ErrorCode code = ErrorCode.MSG_010;
+
+        assertEquals("MSG-010", code.getCode());
+        assertEquals("مؤسسه فرستنده یافت نشد", code.getPersianMessage());
+        assertEquals("Sender institution not found", code.getEnglishDescription());
+    }
+
+    @Test
+    void msg011_codeAndMessages_shouldExist() {
+        ErrorCode code = ErrorCode.MSG_011;
+
+        assertEquals("MSG-011", code.getCode());
+        assertEquals("مؤسسه فرستنده فعال نیست", code.getPersianMessage());
+        assertEquals("Sender institution is inactive", code.getEnglishDescription());
+    }
+
+    @Test
+    void msg012_codeAndMessages_shouldExist() {
+        ErrorCode code = ErrorCode.MSG_012;
+
+        assertEquals("MSG-012", code.getCode());
+        assertEquals("مؤسسه از شبکه انتخاب‌شده پشتیبانی نمی‌کند", code.getPersianMessage());
+        assertEquals("Institution does not support the selected network", code.getEnglishDescription());
+    }
+
+    @Test
     void allErrorCodes_shouldHaveUniqueCodes() {
         ErrorCode[] values = ErrorCode.values();
         long uniqueCodes = java.util.Arrays.stream(values)

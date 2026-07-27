@@ -17,7 +17,10 @@ public enum ErrorCode {
     MSG_006("MSG-006", "اعتبارسنجی پیام ناموفق بود", "Message validation failed"),
     MSG_007("MSG-007", "ایجاد پیام با خطا مواجه شد", "Message creation error"),
     MSG_008("MSG-008", "تعریف پیام تکراری است", "Duplicate message definition"),
-    MSG_009("MSG-009", "تعریف پیام یافت نشد", "Message definition not found");
+    MSG_009("MSG-009", "تعریف پیام یافت نشد", "Message definition not found"),
+    MSG_010("MSG-010", "مؤسسه فرستنده یافت نشد", "Sender institution not found"),
+    MSG_011("MSG-011", "مؤسسه فرستنده فعال نیست", "Sender institution is inactive"),
+    MSG_012("MSG-012", "مؤسسه از شبکه انتخاب‌شده پشتیبانی نمی‌کند", "Institution does not support the selected network");
 
     private final String code;
     private final String persianMessage;
