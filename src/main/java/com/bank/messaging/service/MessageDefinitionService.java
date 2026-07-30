@@ -203,7 +203,7 @@ public class MessageDefinitionService {
      * @return the active definition, if found
      */
     @Transactional(readOnly = true)
-    @Cacheable(value = "messageDefinitions", key = "#messageType + ':' + #network", unless = "#result.isEmpty()")
+    @Cacheable(value = "messageDefinitions", key = "#messageType + ':' + #network", unless = "#result.empty")
     public Optional<MessageDefinitionMapping> findActiveDefinition(String messageType, String network) {
         return repository.findByMessageTypeAndNetworkAndIsActiveTrue(messageType, network);
     }

@@ -57,7 +57,9 @@
       "Bash(gh api *)",
       "Bash(mvn -q -o test)",
       "Bash(mvn -v)",
-      "Bash(mvn -q -DskipTests compile)"
+      "Bash(mvn -q -DskipTests compile)",
+      "Bash(./mvnw dependency:tree)",
+      "Bash(timeout 30 ./mvnw spring-boot:run -q)"
     ]
   }
 }
