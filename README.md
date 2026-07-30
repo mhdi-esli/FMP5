@@ -47,6 +47,8 @@ Create a PostgreSQL database:
 CREATE DATABASE messaging;
 CREATE USER messaging_user WITH PASSWORD 'messaging_password';
 GRANT ALL PRIVILEGES ON DATABASE messaging TO messaging_user;
+GRANT USAGE, CREATE ON SCHEMA public TO messaging_user;
+GRANT ALL ON SCHEMA public TO messaging_user;
 ```
 
 ### 3. Run the application
