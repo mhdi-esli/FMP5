@@ -28,9 +28,9 @@ A Spring Boot backend service for creating and validating inter-bank financial t
 
 - Java 21+
 - Maven 3.9+
-- PostgreSQL 15+
+- Docker & Docker Compose (recommended for local development)
 
-## Quick Start
+## Quick Start (Docker - Recommended)
 
 ### 1. Clone the repository
 
@@ -39,25 +39,53 @@ git clone https://github.com/mhdi-esli/FMP5.git
 cd FMP5
 ```
 
-### 2. Configure database
+### 2. Start services with Docker Compose
+
+```bash
+docker-compose up -d
+```
+
+This will:
+- Start PostgreSQL database on `localhost:5432`
+- Build and start the Spring Boot application on `localhost:8080`
+
+### 3. Verify the application
+
+```bash
+# Check container status
+docker-compose ps
+
+# View logs
+docker-compose logs -f app
+```
+
+The application starts on port `8080` by default.
+
+### 4. Access API Documentation
+
+- Swagger UI: http://localhost:8080/swagger-ui.html
+- OpenAPI JSON: http://localhost:8080/api-docs
+
+## Quick Start (Local Development)
+
+If you prefer to run locally without Docker:
+
+### 1. Configure database
 
 Create a PostgreSQL database:
 
 ```sql
 CREATE DATABASE messaging;
 CREATE USER messaging_user WITH PASSWORD 'messaging_password';
-GRANT ALL PRIVILEGES ON DATABASE messaging TO messaging_user;
 GRANT USAGE, CREATE ON SCHEMA public TO messaging_user;
 GRANT ALL ON SCHEMA public TO messaging_user;
 ```
 
-### 3. Run the application
+### 2. Run the application
 
 ```bash
 ./mvnw spring-boot:run
 ```
-
-The application starts on port `8080` by default.
 
 ### 4. Access API Documentation
 
@@ -190,6 +218,35 @@ Key configuration properties in `application.yml`:
 | `spring.datasource.url` | Database URL | jdbc:postgresql://localhost:5432/messaging |
 | `spring.flyway.enabled` | Enable migrations | true |
 | `spring.cache.type` | Cache provider | caffeine |
+
+## Docker Configuration
+
+The application uses the following default Docker configuration:
+
+| Service | Port | Environment Variables |
+|---------|------|----------------------|
+| PostgreSQL | 5432 | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` |
+| Application | 8080 | `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD` |
+
+### Environment Variables for Docker
+
+When running with Docker Compose, the following environment variables are configured:
+
+- `SPRING_DATASOURCE_URL`: `jdbc:postgresql://postgres:5432/messaging`
+- `SPRING_DATASOURCE_USERNAME`: `messaging_user`
+- `SPRING_DATASOURCE_PASSWORD`: `messaging_password`
+- `SPRING_JPA_HIBERNATE_DDL_AUTO`: `validate`
+- `SPRING_FLYWAY_ENABLED`: `true`
+
+### Building Docker Image Manually
+
+```bash
+# Build the image
+docker build -t fmp5:latest .
+
+# Run the container
+docker run -p 8080:8080 fmp5:latest
+```
 
 ## Architecture Decisions
 
