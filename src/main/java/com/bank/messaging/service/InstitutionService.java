@@ -172,7 +172,7 @@ public class InstitutionService {
      * @return the institution, if found
      */
     @Transactional(readOnly = true)
-    @Cacheable(value = "institutions", key = "#institutionId", unless = "#result.empty")
+    @Cacheable(value = "institutions", key = "#institutionId", unless = "#result == null")
     public Optional<Institution> findByInstitutionId(String institutionId) {
         return repository.findByInstitutionId(institutionId);
     }
