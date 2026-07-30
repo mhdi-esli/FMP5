@@ -27,7 +27,7 @@ public class MessageValidationService {
     private static final Set<String> SUPPORTED_CURRENCIES = Set.of(
         "USD", "EUR", "GBP", "CHF", "JPY", "CAD", "AUD", "NZD", "SGD", "HKD",
         "NOK", "SEK", "DKK", "KWD", "BHD", "SAR", "AED", "QAR", "OMR", "JOD",
-        "EGP", "LBP", "SYP", "JOD", "IQD", "IRR", "AFN", "PKR", "INR", "CNY"
+        "EGP", "LBP", "SYP", "IQD", "IRR", "AFN", "PKR", "INR", "CNY"
     );
 
     /**
@@ -99,7 +99,12 @@ public class MessageValidationService {
 
     private void validateCurrency(String currency, List<ValidationError> errors) {
         if (currency == null || currency.isBlank()) {
-            return; // @NotBlank handles this
+            errors.add(new ValidationError(
+                ErrorCode.MSG_001.getCode(),
+                "currency",
+                "کد ارز الزامی است"
+            ));
+            return;
         }
 
         if (!SUPPORTED_CURRENCIES.contains(currency.toUpperCase())) {

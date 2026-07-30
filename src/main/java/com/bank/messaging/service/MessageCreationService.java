@@ -32,6 +32,7 @@ public class MessageCreationService {
     private final MessageRepository messageRepository;
     private final MessageValidationService validationService;
     private final MessageDefinitionService messageDefinitionService;
+    private final InstitutionService institutionService;
     private final ObjectMapper objectMapper;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -63,6 +64,13 @@ public class MessageCreationService {
         ValidationResult definitionValidation = validateMessageDefinition(request.messageType(), network);
         if (!definitionValidation.isSuccess()) {
             return createFailedResponse(request, definitionValidation.errors());
+        }
+
+        // Validate sender institution exists, is active, and supports the network (MSG-010, MSG-011, MSG-012)
+        ValidationResult institutionValidation = validateInstitution(
+                request.senderInstitutionIdentifier(), network);
+        if (!institutionValidation.isSuccess()) {
+            return createFailedResponse(request, institutionValidation.errors());
         }
 
         // Generate message ID
@@ -104,6 +112,13 @@ public class MessageCreationService {
         }
 
         return ValidationResult.success();
+    }
+
+    private ValidationResult validateInstitution(String institutionId, Network network) {
+        if (network == null) {
+            return ValidationResult.success();
+        }
+        return institutionService.validateInstitution(institutionId, network.name());
     }
 
     private String generateMessageId() {

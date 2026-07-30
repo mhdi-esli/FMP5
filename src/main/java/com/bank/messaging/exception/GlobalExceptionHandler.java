@@ -6,6 +6,8 @@ import com.bank.messaging.dto.ValidationError;
 import com.bank.messaging.enums.ErrorCode;
 import com.bank.messaging.enums.MessageStatus;
 import com.bank.messaging.enums.ValidationResultEnum;
+import com.bank.messaging.exception.DuplicateInstitutionException;
+import com.bank.messaging.exception.InstitutionNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -116,6 +118,32 @@ public class GlobalExceptionHandler {
                 .body(new DefinitionErrorResponse(
                     ErrorCode.MSG_009.getCode(),
                     ErrorCode.MSG_009.getPersianMessage()
+                ));
+    }
+
+    /**
+     * Handle institution not found errors (404).
+     */
+    @ExceptionHandler(InstitutionNotFoundException.class)
+    public ResponseEntity<DefinitionErrorResponse> handleInstitutionNotFound(InstitutionNotFoundException ex) {
+        log.warn("Institution not found: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new DefinitionErrorResponse(
+                    ErrorCode.MSG_010.getCode(),
+                    ex.getMessage()
+                ));
+    }
+
+    /**
+     * Handle duplicate institution errors (409 Conflict).
+     */
+    @ExceptionHandler(DuplicateInstitutionException.class)
+    public ResponseEntity<DefinitionErrorResponse> handleDuplicateInstitution(DuplicateInstitutionException ex) {
+        log.warn("Duplicate institution: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new DefinitionErrorResponse(
+                    ErrorCode.MSG_001.getCode(),
+                    ex.getMessage()
                 ));
     }
 

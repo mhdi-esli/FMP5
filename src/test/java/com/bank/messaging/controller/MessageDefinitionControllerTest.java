@@ -1,5 +1,6 @@
 package com.bank.messaging.controller;
 
+import com.bank.messaging.config.SecurityConfig;
 import com.bank.messaging.dto.MessageDefinitionRequest;
 import com.bank.messaging.dto.MessageDefinitionResponse;
 import com.bank.messaging.exception.DefinitionNotFoundException;
@@ -12,7 +13,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -28,6 +31,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(MessageDefinitionController.class)
+@Import(SecurityConfig.class)
 class MessageDefinitionControllerTest {
 
     @Autowired
@@ -38,6 +42,9 @@ class MessageDefinitionControllerTest {
 
     @MockBean
     private MessageDefinitionService definitionService;
+
+    @MockBean
+    private JwtDecoder jwtDecoder;
 
     private final MessageDefinitionResponse sampleResponse = new MessageDefinitionResponse(
             1L, "MT200", "SWIFT", 1,

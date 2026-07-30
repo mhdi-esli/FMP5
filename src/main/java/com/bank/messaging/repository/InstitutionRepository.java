@@ -30,6 +30,21 @@ public interface InstitutionRepository extends JpaRepository<Institution, Long> 
     List<Institution> findByIsActiveTrue();
 
     /**
+     * Find all inactive institutions.
+     *
+     * @return list of inactive institutions
+     */
+    List<Institution> findByIsActiveFalse();
+
+    /**
+     * Find institutions whose name contains the given fragment (case-insensitive).
+     *
+     * @param name the name fragment to match
+     * @return list of matching institutions
+     */
+    List<Institution> findByNameContainingIgnoreCase(String name);
+
+    /**
      * Find institutions supporting a specific network.
      *
      * @param network the network name

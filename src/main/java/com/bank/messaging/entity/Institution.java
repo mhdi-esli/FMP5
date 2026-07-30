@@ -39,8 +39,12 @@ public class Institution {
     @Column(name = "is_active")
     private Boolean isActive = true;
 
-    @Column(name = "supported_networks")
     @ElementCollection
+    @CollectionTable(
+            name = "institution_supported_networks",
+            joinColumns = @JoinColumn(name = "institution_id")
+    )
+    @Column(name = "network", nullable = false, length = 20)
     private List<String> supportedNetworks;
 
     @CreationTimestamp

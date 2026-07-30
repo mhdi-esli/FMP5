@@ -3,6 +3,7 @@ package com.bank.messaging.service;
 import com.bank.messaging.dto.MessageRequest;
 import com.bank.messaging.dto.MessageResponse;
 import com.bank.messaging.dto.ValidationError;
+import com.bank.messaging.entity.Message;
 import com.bank.messaging.entity.MessageDefinitionMapping;
 import com.bank.messaging.enums.ErrorCode;
 import com.bank.messaging.enums.MessageStatus;
@@ -20,10 +21,12 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 /**
@@ -41,6 +44,9 @@ class MessageCreationServiceTest {
 
     @Mock
     private MessageDefinitionService messageDefinitionService;
+
+    @Mock
+    private InstitutionService institutionService;
 
     @Spy
     private ObjectMapper objectMapper = new ObjectMapper();
@@ -81,6 +87,8 @@ class MessageCreationServiceTest {
                     .network("SWIFT")
                     .isActive(true)
                     .build()));
+            when(institutionService.validateInstitution("BANK01", "SWIFT"))
+                .thenReturn(ValidationResult.success());
             when(messageRepository.save(any())).thenAnswer(invocation -> {
                 Message msg = invocation.getArgument(0);
                 msg.setMessageId("MSG-20260726-000001");
@@ -107,6 +115,8 @@ class MessageCreationServiceTest {
             when(validationService.validate(any())).thenReturn(ValidationResult.success());
             when(messageDefinitionService.findActiveDefinition("200", "SWIFT"))
                 .thenReturn(Optional.of(MessageDefinitionMapping.builder().build()));
+            when(institutionService.validateInstitution("BANK01", "SWIFT"))
+                .thenReturn(ValidationResult.success());
             when(messageRepository.save(any())).thenAnswer(invocation -> {
                 Message msg = invocation.getArgument(0);
                 return msg;
@@ -131,6 +141,8 @@ class MessageCreationServiceTest {
             when(validationService.validate(any())).thenReturn(ValidationResult.success());
             when(messageDefinitionService.findActiveDefinition("200", "SWIFT"))
                 .thenReturn(Optional.of(MessageDefinitionMapping.builder().build()));
+            when(institutionService.validateInstitution("BANK01", "SWIFT"))
+                .thenReturn(ValidationResult.success());
             when(messageRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
             // When
@@ -218,6 +230,106 @@ class MessageCreationServiceTest {
             assertThat(response.status()).isEqualTo(MessageStatus.VALIDATION_FAILED);
             assertThat(response.validationErrors()).hasSize(1);
             assertThat(response.validationErrors().get(0).code()).isEqualTo(ErrorCode.MSG_005.getCode());
+        }
+    }
+
+    @Nested
+    @DisplayName("AC-006: Invalid Institution Validation Tests")
+    class InstitutionValidationTests {
+
+        @Test
+        @DisplayName("createMessage_validSenderInstitution_returnsDraftStatus")
+        void createMessage_validSenderInstitution_returnsDraftStatus() {
+            // Given
+            MessageRequest request = validRequestBuilder.build();
+
+            when(validationService.validate(any())).thenReturn(ValidationResult.success());
+            when(messageDefinitionService.findActiveDefinition("200", "SWIFT"))
+                .thenReturn(Optional.of(MessageDefinitionMapping.builder().build()));
+            when(institutionService.validateInstitution("BANK01", "SWIFT"))
+                .thenReturn(ValidationResult.success());
+            when(messageRepository.save(any())).thenAnswer(invocation -> {
+                Message msg = invocation.getArgument(0);
+                msg.setMessageId("MSG-20260726-000001");
+                return msg;
+            });
+
+            // When
+            MessageResponse response = messageCreationService.createMessage(request);
+
+            // Then
+            assertThat(response.status()).isEqualTo(MessageStatus.DRAFT);
+            assertThat(response.validationResult()).isEqualTo(ValidationResultEnum.SUCCESS);
+        }
+
+        @Test
+        @DisplayName("createMessage_senderInstitutionNotFound_returnsMsg010")
+        void createMessage_senderInstitutionNotFound_returnsMsg010() {
+            // Given
+            MessageRequest request = validRequestBuilder.build();
+
+            when(validationService.validate(any())).thenReturn(ValidationResult.success());
+            when(messageDefinitionService.findActiveDefinition("200", "SWIFT"))
+                .thenReturn(Optional.of(MessageDefinitionMapping.builder().build()));
+            when(institutionService.validateInstitution("BANK01", "SWIFT"))
+                .thenReturn(ValidationResult.failed(new ValidationError(
+                    ErrorCode.MSG_010.getCode(), "senderInstitutionIdentifier",
+                    ErrorCode.MSG_010.getPersianMessage())));
+            when(messageRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+            // When
+            MessageResponse response = messageCreationService.createMessage(request);
+
+            // Then
+            assertThat(response.status()).isEqualTo(MessageStatus.VALIDATION_FAILED);
+            assertThat(response.validationErrors()).hasSize(1);
+            assertThat(response.validationErrors().get(0).code()).isEqualTo(ErrorCode.MSG_010.getCode());
+        }
+
+        @Test
+        @DisplayName("createMessage_senderInstitutionInactive_returnsMsg011")
+        void createMessage_senderInstitutionInactive_returnsMsg011() {
+            // Given
+            MessageRequest request = validRequestBuilder.build();
+
+            when(validationService.validate(any())).thenReturn(ValidationResult.success());
+            when(messageDefinitionService.findActiveDefinition("200", "SWIFT"))
+                .thenReturn(Optional.of(MessageDefinitionMapping.builder().build()));
+            when(institutionService.validateInstitution("BANK01", "SWIFT"))
+                .thenReturn(ValidationResult.failed(new ValidationError(
+                    ErrorCode.MSG_011.getCode(), "senderInstitutionIdentifier",
+                    ErrorCode.MSG_011.getPersianMessage())));
+            when(messageRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+            // When
+            MessageResponse response = messageCreationService.createMessage(request);
+
+            // Then
+            assertThat(response.status()).isEqualTo(MessageStatus.VALIDATION_FAILED);
+            assertThat(response.validationErrors().get(0).code()).isEqualTo(ErrorCode.MSG_011.getCode());
+        }
+
+        @Test
+        @DisplayName("createMessage_senderInstitutionNetworkNotSupported_returnsMsg012")
+        void createMessage_senderInstitutionNetworkNotSupported_returnsMsg012() {
+            // Given
+            MessageRequest request = validRequestBuilder.build();
+
+            when(validationService.validate(any())).thenReturn(ValidationResult.success());
+            when(messageDefinitionService.findActiveDefinition("200", "SWIFT"))
+                .thenReturn(Optional.of(MessageDefinitionMapping.builder().build()));
+            when(institutionService.validateInstitution("BANK01", "SWIFT"))
+                .thenReturn(ValidationResult.failed(new ValidationError(
+                    ErrorCode.MSG_012.getCode(), "senderInstitutionIdentifier",
+                    ErrorCode.MSG_012.getPersianMessage())));
+            when(messageRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+            // When
+            MessageResponse response = messageCreationService.createMessage(request);
+
+            // Then
+            assertThat(response.status()).isEqualTo(MessageStatus.VALIDATION_FAILED);
+            assertThat(response.validationErrors().get(0).code()).isEqualTo(ErrorCode.MSG_012.getCode());
         }
     }
 }

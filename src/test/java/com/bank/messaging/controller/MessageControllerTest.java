@@ -1,5 +1,6 @@
 package com.bank.messaging.controller;
 
+import com.bank.messaging.config.SecurityConfig;
 import com.bank.messaging.dto.MessageRequest;
 import com.bank.messaging.dto.MessageResponse;
 import com.bank.messaging.dto.ValidationError;
@@ -14,7 +15,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -34,6 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Tests AC-001, AC-003, AC-007 scenarios.
  */
 @WebMvcTest(MessageController.class)
+@Import(SecurityConfig.class)
 class MessageControllerTest {
 
     @Autowired
@@ -44,6 +48,9 @@ class MessageControllerTest {
 
     @MockBean
     private MessageCreationService messageCreationService;
+
+    @MockBean
+    private JwtDecoder jwtDecoder;
 
     private MessageRequest.MessageRequestBuilder validRequestBuilder;
 
