@@ -27,7 +27,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class MessageCreationService {
 
     private final MessageRepository messageRepository;
