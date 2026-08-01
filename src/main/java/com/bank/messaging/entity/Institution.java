@@ -3,13 +3,14 @@ package com.bank.messaging.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 /**
  * JPA Entity for financial institutions.
- * This is a stub for EPIC-03 - will be enhanced when EPIC-03 is implemented.
  */
 @Entity
 @Table(name = "institutions")
@@ -39,8 +40,8 @@ public class Institution {
     @Column(name = "is_active")
     private Boolean isActive = true;
 
-    @Column(name = "supported_networks")
-    @ElementCollection
+    @Column(name = "supported_networks", columnDefinition = "text[]")
+    @JdbcTypeCode(SqlTypes.ARRAY)
     private List<String> supportedNetworks;
 
     @CreationTimestamp

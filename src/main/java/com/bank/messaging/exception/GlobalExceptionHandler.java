@@ -16,7 +16,6 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Global exception handler for the application.
@@ -38,21 +37,11 @@ public class GlobalExceptionHandler {
                 error.getField(),
                 error.getDefaultMessage()
             ))
-            .collect(Collectors.toList());
+            .toList();
 
         log.warn("Validation errors: {}", errors);
 
-        MessageResponse response = new MessageResponse(
-            null,
-            null,
-            null,
-            MessageStatus.VALIDATION_FAILED,
-            LocalDateTime.now(),
-            ValidationResultEnum.FAILED,
-            errors
-        );
-
-        return ResponseEntity.badRequest().body(response);
+        return ResponseEntity.badRequest().body(failureResponse(errors));
     }
 
     /**
@@ -61,36 +50,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<MessageResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         String fieldName = ex.getName();
-        String invalidValue = ex.getValue() != null ? ex.getValue().toString() : "null";
+        log.warn("Invalid value '{}' for field '{}'", ex.getValue(), fieldName);
 
-        log.warn("Invalid value '{}' for field '{}'", invalidValue, fieldName);
+        ErrorCode code = "network".equals(fieldName) ? ErrorCode.MSG_003 : ErrorCode.MSG_001;
+        ValidationError error = new ValidationError(code.getCode(), fieldName, code.getPersianMessage());
 
-        ValidationError error;
-        if ("network".equals(fieldName)) {
-            error = new ValidationError(
-                ErrorCode.MSG_003.getCode(),
-                fieldName,
-                ErrorCode.MSG_003.getPersianMessage()
-            );
-        } else {
-            error = new ValidationError(
-                ErrorCode.MSG_001.getCode(),
-                fieldName,
-                "مقدار نامعتبر است"
-            );
-        }
-
-        MessageResponse response = new MessageResponse(
-            null,
-            null,
-            null,
-            MessageStatus.VALIDATION_FAILED,
-            LocalDateTime.now(),
-            ValidationResultEnum.FAILED,
-            List.of(error)
-        );
-
-        return ResponseEntity.badRequest().body(response);
+        return ResponseEntity.badRequest().body(failureResponse(List.of(error)));
     }
 
     /**
@@ -99,11 +64,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateDefinitionException.class)
     public ResponseEntity<DefinitionErrorResponse> handleDuplicateDefinition(DuplicateDefinitionException ex) {
         log.warn("Duplicate definition: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(new DefinitionErrorResponse(
-                    ErrorCode.MSG_008.getCode(),
-                    ErrorCode.MSG_008.getPersianMessage()
-                ));
+        return definitionError(HttpStatus.CONFLICT, ErrorCode.MSG_008);
     }
 
     /**
@@ -112,11 +73,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DefinitionNotFoundException.class)
     public ResponseEntity<DefinitionErrorResponse> handleDefinitionNotFound(DefinitionNotFoundException ex) {
         log.warn("Definition not found: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new DefinitionErrorResponse(
-                    ErrorCode.MSG_009.getCode(),
-                    ErrorCode.MSG_009.getPersianMessage()
-                ));
+        return definitionError(HttpStatus.NOT_FOUND, ErrorCode.MSG_009);
     }
 
     /**
@@ -126,10 +83,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<DefinitionErrorResponse> handleInvalidJson(InvalidJsonException ex) {
         log.warn("Invalid JSON: {}", ex.getMessage());
         return ResponseEntity.badRequest()
-                .body(new DefinitionErrorResponse(
-                    ErrorCode.MSG_001.getCode(),
-                    "Invalid JSON format: " + ex.getMessage()
-                ));
+                .body(new DefinitionErrorResponse(ErrorCode.MSG_001.getCode(), ex.getMessage()));
     }
 
     /**
@@ -145,16 +99,23 @@ public class GlobalExceptionHandler {
             ErrorCode.MSG_007.getPersianMessage()
         );
 
-        MessageResponse response = new MessageResponse(
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(failureResponse(List.of(error)));
+    }
+
+    private static MessageResponse failureResponse(List<ValidationError> errors) {
+        return new MessageResponse(
             null,
             null,
             null,
             MessageStatus.VALIDATION_FAILED,
             LocalDateTime.now(),
             ValidationResultEnum.FAILED,
-            List.of(error)
+            errors
         );
+    }
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    private static ResponseEntity<DefinitionErrorResponse> definitionError(HttpStatus status, ErrorCode code) {
+        return ResponseEntity.status(status)
+                .body(new DefinitionErrorResponse(code.getCode(), code.getPersianMessage()));
     }
 }

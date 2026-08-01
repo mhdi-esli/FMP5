@@ -23,11 +23,10 @@ import java.util.Set;
 @Slf4j
 public class MessageValidationService {
 
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final Set<String> SUPPORTED_CURRENCIES = Set.of(
         "USD", "EUR", "GBP", "CHF", "JPY", "CAD", "AUD", "NZD", "SGD", "HKD",
         "NOK", "SEK", "DKK", "KWD", "BHD", "SAR", "AED", "QAR", "OMR", "JOD",
-        "EGP", "LBP", "SYP", "JOD", "IQD", "IRR", "AFN", "PKR", "INR", "CNY"
+        "EGP", "LBP", "SYP", "IQD", "IRR", "AFN", "PKR", "INR", "CNY"
     );
 
     /**
@@ -39,6 +38,15 @@ public class MessageValidationService {
      */
     public ValidationResult validate(MessageRequest request) {
         List<ValidationError> errors = new ArrayList<>();
+
+        requireText(request.network(), "network", errors);
+        requireText(request.currency(), "currency", errors);
+        requireText(request.valueDate(), "valueDate", errors);
+        requireText(request.requestReference(), "requestReference", errors);
+        requireText(request.transactionReference(), "transactionReference", errors);
+        if (request.amount() == null) {
+            errors.add(requiredError("amount"));
+        }
 
         // Validate network
         validateNetwork(request.network(), errors);
@@ -68,9 +76,19 @@ public class MessageValidationService {
         return ValidationResult.success();
     }
 
+    private void requireText(String value, String fieldName, List<ValidationError> errors) {
+        if (value == null || value.isBlank()) {
+            errors.add(requiredError(fieldName));
+        }
+    }
+
+    private ValidationError requiredError(String fieldName) {
+        return new ValidationError(ErrorCode.MSG_001.getCode(), fieldName, "این فیلد الزامی است");
+    }
+
     private void validateNetwork(String network, List<ValidationError> errors) {
         if (network == null || network.isBlank()) {
-            return; // @NotBlank handles this
+            return; // reported by requireText
         }
 
         Network parsedNetwork = Network.fromCode(network);
@@ -85,7 +103,7 @@ public class MessageValidationService {
 
     private void validateAmount(BigDecimal amount, List<ValidationError> errors) {
         if (amount == null) {
-            return; // @NotNull handles this
+            return; // reported by requireText
         }
 
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
@@ -99,7 +117,7 @@ public class MessageValidationService {
 
     private void validateCurrency(String currency, List<ValidationError> errors) {
         if (currency == null || currency.isBlank()) {
-            return; // @NotBlank handles this
+            return; // reported by requireText
         }
 
         if (!SUPPORTED_CURRENCIES.contains(currency.toUpperCase())) {
@@ -113,12 +131,11 @@ public class MessageValidationService {
 
     private void validateValueDate(String valueDate, List<ValidationError> errors) {
         if (valueDate == null || valueDate.isBlank()) {
-            return; // @NotBlank handles this
+            return; // reported by requireText
         }
 
         try {
-            LocalDate parsedDate = LocalDate.parse(valueDate, DATE_FORMATTER);
-            // Optionally check if date is not too far in the past or future
+            LocalDate.parse(valueDate, DateTimeFormatter.ISO_LOCAL_DATE);
         } catch (DateTimeParseException e) {
             errors.add(new ValidationError(
                 ErrorCode.MSG_001.getCode(),

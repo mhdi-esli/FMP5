@@ -29,7 +29,6 @@
 
 | Enum | Values | File |
 |------|--------|------|
-| `MessageType` | `MT200("200")` | `enums/MessageType.java` |
 | `Network` | `SWIFT`, `SEPA` | `enums/Network.java` |
 | `MessageStatus` | `DRAFT`, `VALIDATION_FAILED` | `enums/MessageStatus.java` |
 | `ValidationResultEnum` | `SUCCESS`, `FAILED` | `enums/ValidationResultEnum.java` |

@@ -3,8 +3,6 @@ package com.bank.messaging.service;
 import com.bank.messaging.dto.ValidationError;
 import com.bank.messaging.enums.ValidationResultEnum;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -15,7 +13,7 @@ public record ValidationResult(
     List<ValidationError> errors
 ) {
     public static ValidationResult success() {
-        return new ValidationResult(ValidationResultEnum.SUCCESS, Collections.emptyList());
+        return new ValidationResult(ValidationResultEnum.SUCCESS, List.of());
     }
 
     public static ValidationResult failed(List<ValidationError> errors) {
@@ -23,12 +21,10 @@ public record ValidationResult(
     }
 
     public static ValidationResult failed(ValidationError error) {
-        List<ValidationError> errors = new ArrayList<>();
-        errors.add(error);
-        return new ValidationResult(ValidationResultEnum.FAILED, errors);
+        return failed(List.of(error));
     }
 
     public boolean isSuccess() {
-        return ValidationResultEnum.SUCCESS.equals(result);
+        return result == ValidationResultEnum.SUCCESS;
     }
 }

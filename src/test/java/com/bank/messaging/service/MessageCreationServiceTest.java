@@ -3,6 +3,7 @@ package com.bank.messaging.service;
 import com.bank.messaging.dto.MessageRequest;
 import com.bank.messaging.dto.MessageResponse;
 import com.bank.messaging.dto.ValidationError;
+import com.bank.messaging.entity.Message;
 import com.bank.messaging.entity.MessageDefinitionMapping;
 import com.bank.messaging.enums.ErrorCode;
 import com.bank.messaging.enums.MessageStatus;
