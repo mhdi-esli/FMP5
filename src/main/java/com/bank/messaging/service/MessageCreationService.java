@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -37,7 +38,34 @@ public class MessageCreationService {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter MESSAGE_ID_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
-    private final AtomicInteger dailySequence = new AtomicInteger(1);
+
+    private final AtomicInteger dailySequence;
+
+    public MessageCreationService(MessageRepository messageRepository, MessageValidationService validationService,
+                                  MessageDefinitionService messageDefinitionService, InstitutionService institutionService,
+                                  ObjectMapper objectMapper) {
+        this.messageRepository = messageRepository;
+        this.validationService = validationService;
+        this.messageDefinitionService = messageDefinitionService;
+        this.institutionService = institutionService;
+        this.objectMapper = objectMapper;
+        this.dailySequence = new AtomicInteger(findNextSequence());
+    }
+
+    /**
+     * Finds the maximum sequence number for today's messages in the database
+     * to initialize the sequence counter on application startup.
+     *
+     * @return the next sequence number (max + 1)
+     */
+    private int findNextSequence() {
+        String todayPrefix = "MSG-" + LocalDateTime.now().format(MESSAGE_ID_DATE_FORMAT);
+        int maxSequence = messageRepository.findMaxSequenceForToday(todayPrefix);
+        int nextSequence = maxSequence + 1;
+        log.debug("Initialized daily sequence for {}: maxSequence={}, nextSequence={}",
+                  todayPrefix, maxSequence, nextSequence);
+        return nextSequence;
+    }
 
     /**
      * Creates a financial institution transfer message.
