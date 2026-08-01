@@ -2,6 +2,7 @@ package com.bank.messaging.controller;
 
 import com.bank.messaging.dto.MessageRequest;
 import com.bank.messaging.dto.MessageResponse;
+import com.bank.messaging.enums.ValidationResultEnum;
 import com.bank.messaging.service.MessageCreationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -42,10 +43,8 @@ public class MessageController {
         log.info("Received message creation request for reference: {}", request.requestReference());
         MessageResponse response = messageCreationService.createMessage(request);
 
-        if (response.status().isSuccess()) {
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.badRequest().body(response);
-        }
+        return response.validationResult() == ValidationResultEnum.SUCCESS
+            ? ResponseEntity.ok(response)
+            : ResponseEntity.badRequest().body(response);
     }
 }

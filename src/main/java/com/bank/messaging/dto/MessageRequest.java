@@ -1,12 +1,14 @@
 package com.bank.messaging.dto;
 
 import jakarta.validation.constraints.*;
+import lombok.Builder;
 
 import java.math.BigDecimal;
 
 /**
  * Request DTO for creating a financial institution transfer message.
  */
+@Builder
 public record MessageRequest(
     @NotBlank(message = "Message type is required")
     String messageType,

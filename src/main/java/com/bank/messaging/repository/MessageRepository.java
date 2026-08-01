@@ -19,12 +19,4 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
      * @return the message if found
      */
     Optional<Message> findByMessageId(String messageId);
-
-    /**
-     * Check if a message exists by message ID.
-     *
-     * @param messageId the message ID
-     * @return true if exists
-     */
-    boolean existsByMessageId(String messageId);
 }

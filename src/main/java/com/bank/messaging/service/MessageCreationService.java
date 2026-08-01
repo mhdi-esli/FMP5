@@ -34,8 +34,9 @@ public class MessageCreationService {
     private final MessageDefinitionService messageDefinitionService;
     private final ObjectMapper objectMapper;
 
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter MESSAGE_ID_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
+    // ponytail: in-memory counter, resets on restart and is per-instance. Move to a DB sequence if
+    // message IDs must be unique across restarts or replicas.
     private final AtomicInteger dailySequence = new AtomicInteger(1);
 
     /**
@@ -113,7 +114,7 @@ public class MessageCreationService {
     }
 
     private Message buildMessageEntity(MessageRequest request, String messageId, Network network) {
-        LocalDate valueDate = LocalDate.parse(request.valueDate(), DATE_FORMATTER);
+        LocalDate valueDate = LocalDate.parse(request.valueDate(), DateTimeFormatter.ISO_LOCAL_DATE);
 
         return Message.builder()
             .messageId(messageId)
@@ -141,20 +142,18 @@ public class MessageCreationService {
     }
 
     private MessageResponse createFailedResponse(MessageRequest request, List<ValidationError> errors) {
+        Network network = Network.fromCode(request.network());
+
         // Save failed message attempt
-        String messageId = null;
-        Message message = Message.builder()
+        messageRepository.save(Message.builder()
             .messageType(request.messageType())
-            .network(Network.fromCode(request.network()))
+            .network(network)
             .status(MessageStatus.VALIDATION_FAILED)
             .requestReference(request.requestReference())
             .transactionReference(request.transactionReference())
             .validationResult(ValidationResultEnum.FAILED)
             .validationErrors(toJson(errors))
-            .build();
-        message = messageRepository.save(message);
-
-        Network network = Network.fromCode(request.network());
+            .build());
 
         return new MessageResponse(
             null,

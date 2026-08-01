@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -20,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Integration tests for MessageDefinitionMappingRepository.
  */
 @DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
 class MessageDefinitionMappingRepositoryIntegrationTest {
 
@@ -33,6 +35,7 @@ class MessageDefinitionMappingRepositoryIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        repository.deleteAll(); // migration seeds definitions; start each test from a known state
         sampleDefinition = MessageDefinitionMapping.builder()
                 .messageType("MT200")
                 .network("SWIFT")
@@ -115,10 +118,8 @@ class MessageDefinitionMappingRepositoryIntegrationTest {
                 .isActive(true)
                 .build();
 
-        assertThatThrownBy(() -> {
-            entityManager.persist(duplicate);
-            entityManager.flush();
-        }).isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> repository.saveAndFlush(duplicate))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
