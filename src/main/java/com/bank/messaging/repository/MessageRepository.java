@@ -36,6 +36,6 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
      *
      * @return the maximum sequence number, or 0 if no messages exist today
      */
-    @Query("SELECT COALESCE(MAX(SUBSTRING(m.messageId, 13, 6))::integer, 0) FROM Message m WHERE m.messageId LIKE :prefix%")
+    @Query("SELECT COALESCE(MAX(CAST(SUBSTRING(m.messageId, 13, 6) AS INTEGER)), 0) FROM Message m WHERE m.messageId LIKE :prefix%")
     int findMaxSequenceForToday(@Param("prefix") String prefix);
 }
