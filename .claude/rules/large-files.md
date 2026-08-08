@@ -1,19 +1,11 @@
----
-paths:
-  - "**/*.log"
-  - "target/**"
-  - "brainstorm/**"
-  - "spec/**"
----
 # Large file handling
 
-- Never Read an entire file that's large (logs, generated specs, build
-  output). Use Grep first to locate the relevant pattern or section, and
-  only read the specific lines you actually need.
-- If a full read is genuinely necessary, use Read with offset/limit to pull
-  a bounded range rather than the whole file.
-- Treat anything over ~500 lines as "large" for this rule, even outside the
-  paths above.
-- If Grep alone answers the question — confirming an error string exists,
-  finding a specific Decision Log entry — stop there. Don't follow up with
-  a full Read just to double-check.
+- Hard-blocked by the check-large-file.sh hook: .log files, target/, build/,
+  node_modules/, dist/ over 500 lines. Use Grep or a bounded Read for these.
+- Everything else — docs/, spec/, brainstorm/ output, or any reference
+  document handed to you for conformance checking — is NOT hard-blocked.
+  Use judgment: Grep first if you're checking something specific, full Read
+  when you genuinely need whole-document context (traceability checks,
+  confidence computation, conformance verification against a reference doc).
+- Never use cat/less/more as a workaround for a file the hook blocks — the
+  answer is Grep or a bounded Read, not bypassing the same check.

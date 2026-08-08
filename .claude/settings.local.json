@@ -1,4 +1,11 @@
 {
+
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Read", "hooks": [{ "type": "command", "command": "./.claude/hooks/check-large-file.sh" }] }
+    ]
+  },
+
   "permissions": {
     "allow": [
       "Bash(npm config *)",
@@ -19,8 +26,6 @@
       "Bash(sed -i 's/messageDefinitionRepository\\\\.findByMessageTypeAndNetworkAndIsActiveTrue/messageDefinitionService.findActiveDefinition/g' /workspace/fmp5/src/test/java/com/bank/messaging/service/MessageCreationServiceTest.java)",
       "Bash(sed -i 's/messageDefinitionRepository\\\\.findByMessageTypeAndNetwork/messageDefinitionService.findDefinition/g' /workspace/fmp5/src/test/java/com/bank/messaging/service/MessageCreationServiceTest.java)",
       "Bash(git restore *)",
-      "Bash(cat *)",
-      "Bash(nano *)",
       "Bash(docker *)",
       "Bash(export JAVA_HOME=/opt/java/openjdk)",
       "Bash(/opt/maven/bin/mvn -q -o test)",
@@ -29,13 +34,12 @@
       "Bash(nohup dockerd)",
       "Bash(git stash *)",
       "Bash(PGPASSWORD=1234 psql *)",
-      "Bash(git *)",
       "Bash(gh pr *)",
       "Bash(gh issue *)",
       "Bash(mvn -q -o test *)",
       "Bash(mvn -v)",
       "Bash(mvn -q -DskipTests compile)",
-      "Bash(./mvnw dependency:tree)",
+      "Bash(./mvnw dependency:tree)"
     ]
   }
 }
