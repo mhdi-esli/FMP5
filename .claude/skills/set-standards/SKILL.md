@@ -1,686 +1,148 @@
 ---
 name: set-standards
 description: >
-  Establishes the prescriptive architecture and coding standards for this project
-  — the rules all future code and documentation generation (via write-spec,
-  plan-tasks, implement-epic) must follow. Run once at project initialization
-  or when company standards change. Outputs domain-specific standards files that
-  later skills read as hard dependencies.
+  Establishes or updates the project's shared architecture, coding, and
+  documentation standards through an async, checkbox-based questionnaire
+  plus ingestion of authoritative company standards docs — never by
+  unilaterally writing opinionated standards as if they were settled
+  policy. Every other skill in the SDD pipeline (write-spec, plan-tasks,
+  implement-epic, verify-epic) consults these documents before acting.
+  Use this once, early in a project, before the first write-spec run —
+  e.g. "set up our coding standards," "establish the architecture
+  reference," or "let's document our engineering conventions."
 ---
 
 # Set Standards Skill
 
-Establishes prescriptive architecture and coding standards that all future SDD workflow stages must follow.
+Establishes project-wide engineering standards that every other skill in the SDD pipeline consults.
 
-## Purpose
+## Objective
 
-This skill declares **how things should be built** (prescriptive), distinct from the `knowledge` skill which reverse-engineers **how things currently are** (descriptive). Never merge their outputs.
+Produce three durable reference documents — architecture principles, coding guidelines, and documentation standards — that reflect what the team actually decided, never what the agent assumes is good practice. Anything not traceable to a confirmed answer becomes `[TBD — needs input]`, not a free-written opinion presented as policy.
 
-## Seed Material
-
-Two company standards documents are ground truth and MUST be ingested verbatim:
-
-1. **SWA_101 — Inter-Service Communication Standards**
-   - REST URL structure, versioning, envelope shape
-   - Header contracts, idempotency rules
-   - Error code ranges, HTTP status mapping
-   - Async messaging / channel naming
-   - Security: OAuth2 + JWS requirements
-   - OpenTelemetry tracing
-   - Protocol selection: REST/gRPC/SOAP
-
-2. **SAW_102 — Architecture Documentation Standards**
-   - Required documentation artifacts per product type
-   - `/documents/` repo folder structure
-   - C4 model levels + draw.io tooling
-   - ADR format (MADR/Persian, immutability rules)
-   - DDD Context Map (Mermaid + relationship patterns)
-   - OpenAPI 3.x and AsyncAPI 3.0.0 mandatory structures
-   - Data Catalog integration
-   - Tool-selection matrix for docs
-
-Both are stored in `.claude/skills/set-standards/standards/` for direct consumption by downstream skills.
-
-## Workflow
-
-### Phase 0 — Seed Material Check
-
-1. Check for `standards/SWA_101-comm-standards.md` in this skill's folder
-2. Check for `standards/SAW_102-arch-doc-standards.md` in this skill's folder
-3. If missing, prompt user to provide the documents:
-   ```
-   "I need the SWA_101 and SAW_102 standards documents to proceed.
-   Please provide the file paths or paste the content."
-   ```
-
-### Phase 1 — Questionnaire
-
-Run as a **questionnaire-based workflow** (not interactive back-and-forth). Present all questions upfront, grouped by domain.
-
-#### Domain 1: API & Messaging (from SWA_101)
-
-For domains fully covered by SWA_101, **confirm scope and exceptions** rather than re-derive:
+## File Layout
 
 ```
-## API & Messaging Standards
-
-Based on SWA_101, the following rules apply:
-
-- URL structure: /api/v{N}/{resource}
-- Envelope format: { "data": {}, "meta": {}, "errors": [] }
-- Idempotency: X-Idempotency-Key header required for POST/PUT
-- Error codes: MSG-XXX format, Persian responses
-- HTTP status: 2xx/4xx/5xx per SWA_101 mapping
-- Async channels: {domain}.{event}.{version}
-- Protocol: REST (default), gRPC for internal high-throughput
-
-**Questions:**
-
-1. This project is a new product — confirm all SWA_101 REST rules apply from day one?
-   [ ] Yes, all rules apply
-   [ ] No, exceptions needed (specify below)
-   Exceptions: _______________
-
-2. Are there any protocol overrides needed? (default: REST)
-   [ ] REST only
-   [ ] gRPC for specific internal services: _______________
-   [ ] SOAP for legacy integration: _______________
-
-3. Is async messaging required for this product?
-   [ ] Yes, using channel pattern: {domain}.{event}.{version}
-   [ ] No async messaging in phase 1
-   [ ] Custom channel naming: _______________
+├── set-standards/
+│   ├── reference/
+│   │   ├── SWA_101-comm-standards.md      (full source doc, stored verbatim)
+│   │   └── SAW_102-arch-doc-standards.md  (full source doc, stored verbatim)
+│   ├── 00_Architecture_Questionnaire.md
+│   └── 00_Coding_Guidelines_Questionnaire.md
+├── .claude/_architecture-reference.md
+├── .claude/_coding-guidelines.md
+├── .claude/_documentation-standards.md    (SAW_102-derived)
 ```
 
-#### Domain 2: Security & Auth (from SWA_101)
+No UX/design reference by default — drop it unless the project has an actual user-facing interface. If it does, add `.claude/_ux-reference.md` and `set-standards/00_UX_Questionnaire.md` following the identical pattern below.
+
+## Workflow — state machine
+
+### Phase 0 — Seed check (runs first, every invocation)
+
+If `brainstorm/Epic_PRD.md` exists and has a populated Agentic Decisions section (implementation stack, testing strategy, CI/CD approach, ADR practice, branching strategy): note which answers can be legitimately carried over. This is different from a recommendation — it's citing a decision that already went through human confirmation in `brainstorm`, so it's fine to pre-fill it as an actual answer (not a recommended-but-unchecked option), clearly labeled `(carried over from Epic_PRD.md)` so it's visibly distinct from a fresh suggestion.
+
+### Phase 0b — External standards check (runs once, after Phase 0)
+
+If `set-standards/reference/*.md` files are present, treat them as a third legitimate source, same epistemic standing as a PRD carryover — not agent judgment, not a recommendation, an already-authorized policy document. Rules that trace to these files are pre-filled as confirmed content, labeled `(from SWA_101 §N)` / `(from SAW_102 §N)`, never presented as a questionnaire option or `← recommended` suggestion.
+
+Do not inline the full source documents into the ~150-line output files — extract only the specific enforceable rules relevant to each file's scope, and link back to the full source: `See set-standards/reference/SWA_101-comm-standards.md for the complete standard.` This keeps the 150-line cap intact while the full text stays available as ground truth if a later skill needs to check something not summarized.
+
+**Routing (section-level, not whole-document):**
+- `_architecture-reference.md` ← SWA_101 §9 Security, §10 Distributed Tracing, §11 Protocol Selection, and the channel-naming-convention part of §7 only (these shape system topology / integration contracts and would warrant an ADR if changed).
+- `_coding-guidelines.md` ← SWA_101 §1 URL Structure, §2 Request Format, §3 Response Format, §4 HTTP Status Codes, §5 Paginated Responses, §6 Data Formatting Rules, the header/body-contract part of §7, and §8 Idempotency Implementation (fits the existing Design Patterns section). These are implementation-level rules applied inside one service, not cross-service topology decisions.
+- `_documentation-standards.md` ← all of SAW_102 — it doesn't fit either of the other two files' section lists without distorting them.
+
+### Phase 1 — Generate questionnaires (if not yet created)
+
+Create `set-standards/00_Architecture_Questionnaire.md` covering: architecture style (Layered / Hexagonal — Ports & Adapters / Clean Architecture / Modular Monolith), module boundaries, dependency-direction rules, and any cross-cutting decision not already captured in the PRD.
+
+Create `set-standards/00_Coding_Guidelines_Questionnaire.md` covering: naming conventions, package structure, testing-pyramid targets, code review/PR conventions, static analysis/linting tools, documentation conventions.
+
+Follow the exact same formatting rules as `brainstorm`: 2-5 options, `(select one)`/`(select all that apply)`, `(required)`/`(optional)`, exactly one `← recommended` label as text (never pre-checked, except for genuinely carried-over prior decisions as described in Phase 0), always `[ ]` never `[]`.
+
+Stop. Tell the user which files were created and that the skill will wait for them to be filled in.
+
+### Phase 2 — Answer gate
+
+Identical rules to `brainstorm`: a select-one question is answered only with exactly one `[x]`; two or more is ambiguous, report separately; a malformed checkbox (`[]`) is unanswered and flagged separately; a recommended label is never treated as an answer unless it's a Phase-0 carryover, explicitly labeled as such. Stop and report if anything required is unanswered, ambiguous, or malformed.
+
+### Phase 3 — Generate/update the reference documents
+
+Step 1 — Generate content strictly from confirmed answers (checked options, carried-over decisions, Phase 0b external-standards citations, or free-text fields). Never add a convention, pattern, or rule that wasn't actually confirmed — if a section would read better with a detail nobody decided, write `[TBD — needs input]` and list it under Open Issues instead.
+
+Step 2 — Compute:
+```
+completeness = (answered required questions / total required questions) × 100
+```
+Report it plainly, per document. Not a gate — a low score with clear Open Issues is a legitimate, useful output, same as everywhere else in this pipeline.
+
+**Update vs. rewrite** (if the reference files already exist): preserve any content a human added directly, compare against an embedded version marker, append a dated Iteration History entry describing what changed, update the marker. Standards evolve — this isn't a one-shot file.
+
+## Required Sections (all three documents)
+
+### `.claude/_architecture-reference.md`
+
+Sections:
+- **System Architecture** — top-level style and major components
+- **Major Design Decisions** — with ADR references where applicable
+- **Constraints** — technical, regulatory, operational
+- **Key Dependencies** — external systems, libraries, services
+- **Development Patterns** — accepted patterns for this project
+- **Open Issues** — `[TBD — needs input]` items
+- **Iteration History** — dated entries on each update
+
+Keep under ~150 lines — reference material an agent reliably reads in full, not skims.
+
+### `.claude/_coding-guidelines.md`
+
+Sections:
+- **Coding Standards** — language-specific conventions
+- **Naming Conventions** — classes, methods, variables, packages
+- **Testing Practices** — pyramid targets, coverage, tools
+- **Design Patterns** — accepted patterns, when to use
+- **Open Issues** — `[TBD — needs input]` items
+- **Iteration History** — dated entries on each update
+
+Same length cap.
+
+### `.claude/_documentation-standards.md`
+
+Sections:
+- **Required Artifacts** — by product type
+- **Repository Structure** — where docs live
+- **C4 Model Rules** — levels, tooling, naming
+- **ADR Format & Immutability Rule** — MADR/Persian, no deletion
+- **Context Map Conventions** — Mermaid patterns, relationships
+- **OpenAPI/AsyncAPI Structure Rules** — required sections, versioning
+- **Tool Selection Matrix** — when to use which tool
+- **Open Issues** — `[TBD — needs input]` items
+- **Iteration History** — dated entries on each update
+
+Same length cap and completeness-score treatment.
+
+## Wiring into the rest of the pipeline
+
+This skill's output is inert unless the other four actually read it. Add this to the Phase 0/Preflight of `write-spec`, `plan-tasks`, `implement-epic`, and `verify-epic`:
 
 ```
-## Security & Authentication Standards
-
-Based on SWA_101 §7:
-
-- OAuth2 resource server pattern
-- JWS signature verification via JWKS
-- AMS permission declarations
-- Token forwarding for inter-service calls
-- OpenTelemetry tracing with redaction rules
-
-**Questions:**
-
-1. OAuth2 provider:
-   Current config: https://sso.tps.ir/.well-known/openid-configuration/jwks
-   [ ] Use existing SSO configuration
-   [ ] Different provider: _______________
-
-2. Permission model:
-   [ ] Use AMS permission declarations from SWA_101
-   [ ] Custom permission structure: _______________
-
-3. Tracing & logging redaction:
-   [ ] Apply SWA_101 redaction rules (token, PII, credentials)
-   [ ] Custom redaction rules: _______________
+Read `.claude/_architecture-reference.md`, `.claude/_coding-guidelines.md`,
+and `.claude/_documentation-standards.md` if they exist, and follow their
+conventions. If any are missing, proceed but add a note under Risks
+recommending `set-standards` be run before further epics are built.
 ```
 
-#### Domain 3: Documentation & Architecture (from SAW_102)
-
-```
-## Documentation & Architecture Standards
-
-Based on SAW_102, the following artifacts are required by product type.
-
-**Questions:**
-
-1. Product type (determines required artifacts):
-   [ ] New product — all Phase-1 artifacts required
-   [ ] Enhancement to existing product — subset applies
-   [ ] Internal service — minimal set applies
-   Specify: _______________
-
-2. ADR format preference:
-   [ ] MADR format (English)
-   [ ] Persian ADR format
-   [ ] Hybrid: English structure + Persian commentary
-
-3. C4 model level required:
-   [ ] Level 1: System Context
-   [ ] Level 2: Container
-   [ ] Level 3: Component
-   [ ] Level 4: Code (if needed)
-
-4. Diagram tooling:
-   [ ] draw.io (per SAW_102)
-   [ ] Mermaid for simple diagrams
-   [ ] Both: draw.io for C4, Mermaid for spec docs
-
-5. OpenAPI version:
-   Current: SpringDoc OpenAPI 2.6.0
-   [ ] Continue with SpringDoc auto-generation
-   [ ] Manual OpenAPI 3.x spec required
-
-6. AsyncAPI requirement:
-   [ ] Required if async messaging (SAW_102 §5)
-   [ ] Not applicable to this product
-```
-
-#### Domain 4: Coding Conventions (Interview)
-
-This domain is NOT covered by SWA_101/SAW_102 — interview the user:
-
-```
-## Coding Conventions
-
-SWA_101/SAW_102 don't cover language-specific conventions. Help me establish:
-
-**Questions:**
-
-1. Java/Spring Boot conventions:
-   [ ] Follow existing project patterns (read codebase first)
-   [ ] Apply company Java standards document: _______________
-   [ ] Use Spring Boot best practices + project-specific rules below
-
-   Additional rules: _______________
-
-2. Layering pattern:
-   Current: Controller → Service → Repository
-   [ ] Continue with current layering
-   [ ] Add separate validation layer
-   [ ] Apply different pattern: _______________
-
-3. DTO vs Entity usage:
-   Current: Separate DTO and Entity classes
-   [ ] Keep separation (entities internal, DTOs at API boundary)
-   [ ] Use mapstruct for conversion
-   [ ] Different approach: _______________
-
-4. Error handling:
-   Current: Global exception handler with error codes
-   [ ] Continue current pattern
-   [ ] Enhance with specific exception types per domain
-   [ ] Different approach: _______________
-
-5. Testing conventions:
-   Current: Testcontainers for integration tests
-   [ ] Continue Testcontainers + unit test split
-   [ ] Add contract testing
-   [ ] Different approach: _______________
-
-6. Naming conventions:
-   [ ] Follow Java/Spring Boot defaults
-   [ ] Company-specific naming rules: _______________
-
-7. Code quality gates:
-   [ ] Maven build must pass
-   [ ] Minimum test coverage: _____ %
-   [ ] Static analysis tool: _______________
-```
-
-### Phase 2 — Conflict Detection
-
-Detect and flag conflicts between SWA_101/SAW_102 and the project's tech stack:
-
-```
-## Conflict Detection
-
-Checking for conflicts between company standards and project setup:
-
-1. SWA_101 assumes OAuth2 + JWS — your project uses: OAuth2 resource server ✓
-2. SAW_102 requires OpenAPI 3.x — you have SpringDoc 2.6.0 ✓
-3. SWA_101 §3 requires X-Idempotency-Key header — not seen in current API
-   → Open question: Should idempotency keys be added to POST /api/v1/messages?
-
-[ ] Conflict noted, will address in Technical Questions
-[ ] Exception granted for this project: _______________
-```
-
-### Phase 3 — Write Standards Files
-
-Create `/standards/` directory at project root and write domain files:
-
-#### File: `/standards/api-and-messaging.md`
-
-```markdown
-# API & Messaging Standards
-
-Source: SWA_101 — Inter-Service Communication Standards
-
-## 1. URL Structure
-
-- Pattern: `/api/v{N}/{resource}`
-- Version in path, not header
-- Resource names: plural, lowercase, kebab-case
-- Example: `/api/v1/messages`, `/api/v1/message-definitions`
-
-## 2. Request/Response Envelope
-
-### Success Response
-```json
-{
-  "data": { /* resource data */ },
-  "meta": {
-    "requestId": "uuid",
-    "timestamp": "ISO-8601"
-  }
-}
-```
-
-### Error Response
-```json
-{
-  "data": null,
-  "meta": {
-    "requestId": "uuid",
-    "timestamp": "ISO-8601"
-  },
-  "errors": [
-    {
-      "code": "MSG-001",
-      "message": "Persian error message",
-      "field": "fieldName",
-      "details": {}
-    }
-  ]
-}
-```
-
-## 3. Headers
-
-Required:
-- `X-Request-ID`: UUID for tracing
-- `X-Idempotency-Key`: UUID for POST/PUT (idempotent operations)
-- `Authorization`: Bearer token
-
-Optional:
-- `Accept-Language`: For response language
-- `X-Forwarded-For`: Client IP chain
-
-## 4. Idempotency
-
-- POST/PUT operations MUST include `X-Idempotency-Key`
-- Server returns same response for same key within TTL
-- TTL: 24 hours (configurable)
-- Duplicate detection: store key + response in cache
-
-## 5. Error Codes
-
-- Format: `{DOMAIN}-{NUMBER}` (e.g., `MSG-001`)
-- Domain prefixes: `MSG` (messaging), `INST` (institution), `DEF` (definition)
-- HTTP status mapping per SWA_101 §4
-- All error messages in Persian (per project requirement)
-
-## 6. HTTP Status Codes
-
-| Code | Usage |
-|------|-------|
-| 200 | Success (GET, PUT) |
-| 201 | Created (POST) |
-| 204 | No content (DELETE) |
-| 400 | Validation error |
-| 401 | Unauthorized |
-| 403 | Forbidden |
-| 404 | Not found |
-| 409 | Conflict (duplicate, state mismatch) |
-| 422 | Business rule violation |
-| 500 | Internal error |
-
-## 7. Async Messaging Channels
-
-Pattern: `{domain}.{event}.{version}`
-
-Examples:
-- `message.created.v1`
-- `message.validated.v1`
-- `institution.updated.v1`
-
-## 8. Protocol Selection
-
-Default: REST
-
-gRPC: Internal high-throughput services (requires architectural decision)
-
-SOAP: Legacy integration only (requires exception approval)
-
-## Exceptions for This Project
-
-- [List any confirmed exceptions from questionnaire]
-
-## Confidence Score
-
-[ ] /10 — [reason for any shortfall]
-```
-
-#### File: `/standards/security-and-auth.md`
-
-```markdown
-# Security & Authentication Standards
-
-Source: SWA_101 §7 — Security Requirements
-
-## 1. OAuth2 Resource Server
-
-- Pattern: Resource server validates tokens via JWKS
-- JWKS endpoint: `https://sso.tps.ir/.well-known/openid-configuration/jwks`
-- Token type: JWT (RS256 signed)
-
-## 2. JWS Signature Verification
-
-- Fetch public keys from JWKS endpoint
-- Cache keys (refresh on key rotation)
-- Validate: signature, expiry, issuer, audience
-
-## 3. AMS Permission Declarations
-
-- Permission format: `resource:action` (e.g., `messages:create`)
-- Declare in service layer
-- Enforce via `@PreAuthorize` annotations
-
-## 4. Token Forwarding
-
-- For inter-service calls, forward user's token
-- Use `Authorization: Bearer {token}` header
-- Never expose token in logs
-
-## 5. OpenTelemetry Tracing
-
-- Trace all HTTP requests
-- Propagate trace context: `traceparent`, `tracestate` headers
-- Redaction rules (never log):
-  - Authorization headers
-  - Passwords, tokens, secrets
-  - PII fields (national ID, account numbers)
-
-## 6. HTTPS Enforcement
-
-- All external traffic over HTTPS
-- TLS 1.2+ required
-- Certificate validation enabled
-
-## Exceptions for This Project
-
-- [List any confirmed exceptions from questionnaire]
-
-## Confidence Score
-
-[ ] /10 — [reason for any shortfall]
-```
-
-#### File: `/standards/documentation-and-architecture.md`
-
-```markdown
-# Documentation & Architecture Standards
-
-Source: SAW_102 — Architecture Documentation Standards
-
-## 1. Required Artifacts by Product Type
-
-### New Product (Phase 1)
-- [ ] System Context diagram (C4 Level 1)
-- [ ] Container diagram (C4 Level 2)
-- [ ] Component diagram (C4 Level 3) — per epic
-- [ ] OpenAPI 3.x spec
-- [ ] Data model / ERD
-- [ ] ADRs for major decisions
-
-### Enhancement to Existing Product
-- [ ] Component diagram (affected areas)
-- [ ] Updated OpenAPI spec
-- [ ] ADR for architectural changes
-
-### Internal Service
-- [ ] Container diagram
-- [ ] OpenAPI spec
-
-## 2. Folder Structure
-
-```
-/documents/
-├── architecture/
-│   ├── c4/
-│   │   ├── level-1-context.drawio
-│   │   ├── level-2-container.drawio
-│   │   └── level-3-component/
-│   │       └── {epic-slug}.drawio
-│   └── adr/
-│       └── NNN-title.md
-├── api/
-│   ├── openapi.yaml
-│   └── asyncapi.yaml (if async messaging)
-├── data/
-│   └── erd.drawio
-└── README.md
-```
-
-## 3. ADR Format
-
-Use MADR format with Persian commentary (if required):
-
-```markdown
-# ADR-NNN: Title
-
-## Status
-[Proposed | Accepted | Deprecated | Superseded]
-
-## Context
-[Describe the situation and problem]
-
-## Decision
-[Describe the decision]
-
-## Consequences
-[Describe impact]
-
-## Persian Notes (optional)
-[توضیحات به فارسی]
-```
-
-## 4. C4 Model
-
-- Level 1: System Context (external actors, systems)
-- Level 2: Container (applications, databases, services)
-- Level 3: Component (major components per container)
-- Level 4: Code (classes, functions) — rarely needed
-
-Tool: draw.io with C4 model stencil
-
-## 5. DDD Context Map
-
-Use Mermaid for Context Maps:
-
-```mermaid
-graph LR
-    A[Message Context] -->|ACL| B[Institution Context]
-    A -->|CF| C[Definition Context]
-```
-
-Relationship patterns:
-- ACL: Anti-Corruption Layer
-- CF: Conformist
-- OHS: Open Host Service
-- PL: Published Language
-
-## 6. OpenAPI 3.x Requirements
-
-- Auto-generated via SpringDoc (current: 2.6.0)
-- Include: paths, schemas, security schemes
-- Host at: `/api-docs`, `/swagger-ui.html`
-- Version in path: `/api/v1/...`
-
-## 7. AsyncAPI 3.0.0 Requirements
-
-Required if async messaging:
-- Channels matching `{domain}.{event}.{version}`
-- Message schemas
-- Security requirements
-- Bindings (Kafka, AMQP, etc.)
-
-## 8. Data Catalog Integration
-
-- Register all entities in data catalog
-- Include: field descriptions, PII flags, sensitivity levels
-- Link to OpenAPI schemas
-
-## Exceptions for This Project
-
-- [List any confirmed exceptions from questionnaire]
-
-## Confidence Score
-
-[ ] /10 — [reason for any shortfall]
-```
-
-#### File: `/standards/coding-conventions.md`
-
-```markdown
-# Coding Conventions
-
-Source: Interview + Existing Project Patterns
-
-## 1. Java/Spring Boot Conventions
-
-- Java version: 21
-- Spring Boot version: 3.3.2
-- Follow Spring Boot best practices
-- Use constructor injection (Lombok `@RequiredArgsConstructor`)
-
-## 2. Layering Pattern
-
-```
-Controller → Service → Repository
-           ↓
-      Validation Service (external)
-```
-
-- Controllers: HTTP handling only, delegate to services
-- Services: Business logic, orchestration
-- Repositories: Data access only
-- Validation services: Cross-cutting validation rules
-
-## 3. DTO vs Entity
-
-- Entities: Database mapping, internal to service layer
-- DTOs: API boundary, exposed to controllers
-- Mapping: Manual mapping (no mapstruct currently)
-
-## 4. Error Handling
-
-- Global `@ControllerAdvice` exception handler
-- Custom exceptions per domain (`MessageException`, `InstitutionException`)
-- Error codes: `MSG-XXX` format
-- All error messages in Persian
-
-## 5. Testing Conventions
-
-- Unit tests: JUnit 5 + Mockito
-- Integration tests: Testcontainers (PostgreSQL)
-- Naming: `{Class}Test` for unit, `{Class}IntegrationTest` for integration
-- Coverage: Run via `mvn test`
-
-## 6. Naming Conventions
-
-- Classes: PascalCase (`MessageService`)
-- Methods: camelCase (`createMessage`)
-- Constants: UPPER_SNAKE (`MAX_RETRY_COUNT`)
-- Packages: lowercase (`com.bank.messaging`)
-
-## 7. Code Quality Gates
-
-- Build: `mvn clean package` must pass
-- Tests: All tests must pass
-- Code style: Follow project IntelliJ/Eclipse formatter
-
-## 8. Logging
-
-- Use SLF4J with Lombok `@Slf4j`
-- Log levels: ERROR, WARN, INFO, DEBUG
-- Never log: tokens, passwords, PII
-- Use MDC for request tracing
-
-## 9. Database Conventions
-
-- Flyway migrations in `src/main/resources/db/migration/`
-- Naming: `V{N}__description.sql`
-- Entity IDs: Long (auto-generated)
-- Audit fields: `createdAt`, `updatedAt` (managed by JPA)
-
-## 10. Cache Conventions
-
-- Caffeine cache: max 1000 entries, TTL 300s
-- Cache at service layer
-- Invalidate on updates
-
-## Exceptions for This Project
-
-- [List any confirmed exceptions from questionnaire]
-
-## Confidence Score
-
-[ ] /10 — [reason for any shortfall]
-```
-
-### Phase 4 — Consumption Contract
-
-Write to end of each standards file:
-
-```markdown
----
-
-## Consumption Contract
-
-Downstream skills MUST read this file and validate against its rules:
-
-### write-spec
-- MUST validate all API paths against `/standards/api-and-messaging.md` §1 before finalizing spec
-- MUST use error code format from §5
-- MUST apply envelope format from §2
-- MUST check security requirements from `/standards/security-and-auth.md`
-
-### plan-tasks
-- MUST order tasks to implement standards-compliant components first
-- MUST flag any task that violates standards
-
-### implement-epic
-- MUST implement according to coding conventions in `/standards/coding-conventions.md`
-- MUST validate API changes against `/standards/api-and-messaging.md`
-- MUST write tests per `/standards/coding-conventions.md` §5
-
-### Architecture Advisors
-- MUST reference `/standards/documentation-and-architecture.md` for required artifacts
-- MUST enforce C4 model levels and tooling
-- MUST check OpenAPI/AsyncAPI requirements
-```
-
-## File Locations
-
-```
-{project root}/
-├── standards/
-│   ├── api-and-messaging.md
-│   ├── security-and-auth.md
-│   ├── documentation-and-architecture.md
-│   └── coding-conventions.md
-└── .claude/skills/set-standards/
-    ├── SKILL.md
-    └── standards/
-        ├── SWA_101-comm-standards.md
-        └── SAW_102-arch-doc-standards.md
-```
-
-## Hard Rules
-
-1. Never paraphrase SWA_101/SAW_102 — store verbatim in skill's `standards/` folder
-2. Never merge prescriptive (this skill) with descriptive (`knowledge`) output
-3. Never skip the questionnaire — even if SWA_101/SAW_102 cover most rules
-4. Never resolve conflicts silently — flag as open questions
-5. Always compute and report confidence score per domain
-6. Always write the consumption contract so downstream skills have hard dependencies
-7. Never mark confidence 10/10 if questionnaire has unanswered questions or exceptions exist
+`brainstorm` doesn't need this — its questionnaire is business-level and predates these documents by design.
 
 ## Exit Criteria
 
-Skill is done when:
-1. All four domain files written to `/standards/`
-2. Each has a confidence score
-3. Each has the consumption contract
-4. Any conflicts between SWA_101/SAW_102 and project are flagged
-5. User has confirmed exceptions (if any)
+Done when both questionnaires (where required) are fully answered or explicitly flagged back to the user, and all three reference documents have been generated or updated with an accurate, computed completeness score.
 
-"Confidence ≥ 8/10 on all domains" is the threshold for downstream skills to rely on these standards without re-validation — not a gate for this skill to produce output.
+## Hard Rules
+
+1. Never write a coding convention or architecture rule into any of the three documents unless it traces to a confirmed answer, a carried-over prior decision, a Phase 0b external-standards citation, or explicit free text — never the agent's own judgment presented as settled policy.
+2. Never pre-check a recommended option — the only exception is a Phase-0 carryover from `Epic_PRD.md`, and that must be visibly labeled as a carryover, never indistinguishable from a fresh recommendation.
+3. Never fabricate the completeness score — compute it from the parsed questionnaire files, per document.
+4. Never silently rewrite a human-edited reference document — preserve non-generated content and log what changed.
+5. Always write unchecked boxes as `[ ]` — never `[]`.
+6. A rule sourced from `set-standards/reference/*.md` is written into an output file only with its `(from SWA_101 §N)` / `(from SAW_102 §N)` citation intact — never merged into prose indistinguishably from a questionnaire-derived rule. This preserves traceability the same way `write-spec`'s Decision Log traces answers back to technical questions.

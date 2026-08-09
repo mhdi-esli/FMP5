@@ -18,11 +18,11 @@ Converts one named epic from an approved Epic PRD into a detailed technical spec
 
 ### Phase 0 — Preflight
 
-1. Confirm `docs/PRD.md` (or `brainstorm/Epic_PRD.md`) exists
+1. Confirm `brainstorm/Epic_PRD.md` exists (fallback: `docs/PRD.md`)
 2. Verify the named epic is listed in the Epic Breakdown section
-3. If epic not found, stop and list available epic IDs
-4. Read only the requirements and acceptance criteria tagged to that epic
-5. Note the PRD's Confidence Level for traceability
+   - If epic not found, stop and list available epic IDs instead of guessing
+3. Read only the requirements and acceptance criteria tagged to that epic — not the whole PRD
+4. Note the PRD's Confidence Level in the spec header for traceability, but do not block on it — a spec can legitimately surface gaps the PRD didn't catch
 
 ### Phase 1 — Draft
 
@@ -64,10 +64,11 @@ Generate the spec with these required sections:
 
 13. **Technical Questions** — Open items with:
     - 2-5 options tagged `(select one)` or `(select all that apply)`
-    - One option may have `← recommended` label
-    - Free text for specific values
-    - Unchecked boxes as `[ ]` (space between brackets)
-    - Tag each `(high-impact)` or `(standard)`
+    - Exactly one option may carry `← recommended` as a text label — never a pre-checked box
+    - Free text allowed where the answer is a specific value (library version, numeric SLA) rather than a closed choice
+    - Unchecked boxes as `[ ]` — literal space between brackets, never `[]`
+    - Tag each `(high-impact)` or `(standard)` — high-impact blocks a core acceptance-criterion path
+    - Cross-reference to the section(s) it blocks
 
 14. **Risks** — Identified risks
 
@@ -79,14 +80,25 @@ Generate the spec with these required sections:
 
 When re-running after technical questions are answered:
 
-1. Locate existing spec using Epic slug rule (never create duplicate folder)
-2. For each answered question:
-   - Fold answer into blocking section
-   - Remove `[blocked by TQ-n]` marker
-   - Add Decision Log entry if diverged from recommendation
-3. Recompute Confidence Level
-4. Append dated entry to Iteration History
-5. Preserve any human-added content
+1. Locate existing spec using Epic slug rule above — never create a second folder for an epic that already has one
+2. A technical question is answered when:
+   - Select-one: exactly one box checked
+   - Select-all: at least one box checked
+   - Multiple checks on a select-one is ambiguous — report it, don't resolve it yourself
+   - Malformed checkbox (not `[ ]` or `[x]`) counts as unanswered and must be flagged
+3. For each newly-answered question:
+   - Fold the answer into the section it was blocking
+   - Remove the `[blocked by TQ-n]` marker
+   - If the selected answer differs from the labeled recommendation, add a Decision Log entry explaining the choice
+4. Recompute Confidence Level after all answers folded in
+5. Before appending Iteration History entry:
+   - Check current entry count for this epic
+   - If >15 entries, collapse all entries older than the 5 most recent into a single summary line:
+     `entries 1–N collapsed — net effect: <one-line summary of what changed across them>`
+   - Never collapse the 5 most recent entries
+   - Never touch Decision Log — only Iteration History
+6. Append dated entry to Iteration History describing what changed
+7. Preserve any content a human added directly to the spec that didn't come from a technical question answer
 
 ## Confidence Level Formula
 
@@ -102,16 +114,19 @@ Report as: `Confidence Level: 72% — 2 blocking technical questions`
 
 Derive deterministically on every run:
 
-1. Take epic ID → lowercase → `epic-01`
-2. Take epic name after colon → lowercase, strip punctuation, collapse whitespace to hyphens → `message-creation-service`
-3. Join with hyphen: `epic-01-message-creation-service`
-4. Before creating new folder, check `specs/` for existing folder starting with same epic ID prefix → update that folder if found
+1. Take the epic ID exactly as it appears in Epic Breakdown (e.g. `EPIC-02`), lowercase it → `epic-02`
+2. Take the epic name following the colon (e.g. `Message Validation & Transformation`), lowercase it, strip punctuation, collapse whitespace to single hyphens → `message-validation-transformation`
+3. Join the two with a hyphen: `epic-02-message-validation-transformation`
+4. Before creating a new folder, check `specs/` for any existing folder starting with the same epic ID prefix (`epic-02-*`)
+   - If one exists — even under a slightly different name (e.g. the epic was renamed in the PRD since the last run) — treat that as the target for update, not a new folder
+   - Note the rename in that spec's Iteration History rather than creating a duplicate
 
 ## File Locations
 
 ```
 {project root}/
-├── docs/PRD.md                    # Input (Epic PRD)
+├── brainstorm/Epic_PRD.md         # Input (primary — produced by brainstorm)
+├── docs/PRD.md                    # Input (fallback)
 ├── specs/<epic-slug>/spec.md      # Output (Technical Spec)
 └── .claude/skills/write-spec/
     └── SKILL.md                   # This file
@@ -147,6 +162,6 @@ Impact: (high-impact)
 
 Skill is done when spec is written/updated with:
 - Accurate computed Confidence Level
-- All open technical questions either answered-and-folded-in or clearly listed with blockers
+- All open technical questions either answered-and-folded-in or clearly listed with what they block
 
-"Confidence Level ≥ 90%" is the threshold for downstream implementation skill — not a gate for this skill to produce output.
+"Confidence Level ≥ 90%" is the threshold a downstream implementation skill should check before starting to code against this spec — not a gate for this skill to produce output. A 60%-confidence draft that honestly shows its gaps is more useful than no output.
