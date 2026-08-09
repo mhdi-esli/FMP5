@@ -1,0 +1,440 @@
+---
+name: plan-tasks
+description: >
+  Takes a completed epic spec (from write-spec) and breaks it down into a
+  structured, reviewable task list — the concrete unit of work that drives
+  implement-epic and later becomes Jira tickets. Optional for small epics:
+  offers a fast-path with single-task decomposition.
+---
+
+# Plan Tasks Skill
+
+Breaks down an epic spec into implementation-ready tasks with dependency ordering and standards traceability.
+
+## Purpose
+
+This skill transforms a spec into **concrete units of work** that:
+- Drive `implement-epic` (one task = one implementation pass)
+- Become Jira tickets (via separate sync step)
+- Reference standards from `/standards/*.md` for compliance
+- Reference real file/module names from `/knowledge/*.md` when touching existing code
+
+## Inputs
+
+```
+{project root}/
+├── specs/<epic-slug>/spec.md           (required — output of write-spec)
+├── standards/*.md                       (required — from set-standards)
+├── knowledge/*.md                       (optional — from knowledge skill)
+└── .claude/skills/plan-tasks/SKILL.md
+```
+
+## Output
+
+```
+{project root}/
+├── tasks/<epic-slug>-tasks.md           (human-readable)
+└── tasks/<epic-slug>-tasks.json         (machine-readable)
+```
+
+## Workflow
+
+### Phase 0 — Preflight
+
+1. Confirm `specs/<epic-slug>/spec.md` exists
+   - If not, stop and report missing spec
+2. Load `/standards/*.md` files
+   - If missing, warn but continue (standards are advisory, not blocking)
+3. Check for `/knowledge/*.md` files
+   - If present, use for real file/module references
+   - If absent, use generic paths from spec
+4. Derive epic-slug using same rule as `write-spec`:
+   - Epic ID lowercase + epic name slug → `epic-01-message-creation-service`
+
+### Phase 1 — Epic Size Assessment
+
+Determine if decomposition is needed or if single-task fast-path applies.
+
+**Size Heuristic:**
+
+```
+small = (
+  files_affected ≤ 2 AND
+  endpoints_added ≤ 2 AND
+  no_new_external_integration AND
+  no_new_database_tables AND
+  acceptance_criteria_count ≤ 3
+)
+```
+
+If `small`:
+- Emit single task with `size: small — decomposition skipped`
+- Skip questionnaire
+- Jump to Phase 3 (Write Task Files)
+
+If NOT `small`:
+- Proceed to Phase 2 (Decomposition)
+
+### Phase 2 — Decomposition
+
+For non-trivial epics, decompose the spec into tasks.
+
+#### Task Decomposition Rules
+
+1. **One task = one cohesive implementation unit**
+   - A task should be completable in one `implement-epic` pass
+   - If task needs >3 file edits across different layers, split it
+
+2. **Follow vertical slice pattern when possible**
+   - Prefer: "Add endpoint with validation + service + repository"
+   - Avoid: "Add all controllers", then "add all services", then "add all repositories"
+
+3. **Extract cross-cutting concerns**
+   - Database migrations → separate task if >1 table
+   - Security configuration → separate task if new auth requirements
+   - Infrastructure/setup → separate task if new external dependency
+
+4. **Respect dependencies from spec**
+   - If spec's Implementation Plan has explicit ordering, honor it
+   - If spec has `[blocked by TQ-n]` markers, create task but mark `blocked: true`
+
+5. **Map acceptance criteria to tasks**
+   - Each AC should trace to at least one task
+   - One task may cover multiple related ACs
+
+#### Decomposition Patterns
+
+**Pattern A: Feature Addition (vertical slice)**
+```
+Task 1: Add database schema (migration + entity)
+Task 2: Add repository layer (Repository + integration tests)
+Task 3: Add service layer (Service + unit tests)
+Task 4: Add controller layer (Controller + API tests)
+Task 5: Add security configuration (if needed)
+```
+
+**Pattern B: Service Enhancement (horizontal)**
+```
+Task 1: Add validation logic to existing service
+Task 2: Add new endpoint to existing controller
+Task 3: Update existing repository with new query
+```
+
+**Pattern C: New Integration**
+```
+Task 1: Add external service client (config + client class)
+Task 2: Add integration with existing service layer
+Task 3: Add circuit breaker / retry configuration
+Task 4: Add observability (tracing, metrics)
+```
+
+#### Questionnaire (Only for Ambiguous Cases)
+
+Present questionnaire ONLY when decomposition is ambiguous:
+
+```
+## Decomposition Questions for <epic-slug>
+
+Based on the spec, I can decompose this epic in multiple ways:
+
+1. Database migration handling:
+   [ ] Separate task for migration + entity (recommended for >1 table)
+   [ ] Fold migration into first implementing task (for 1 table or simple schema)
+
+   Current assessment: [auto-filled based on spec]
+
+2. Layer separation:
+   [ ] Vertical slices (endpoint → service → repository in one task) — recommended for features
+   [ ] Horizontal layers (all controllers, then all services, etc.) — only for refactoring
+
+   Current assessment: [auto-filled based on spec]
+
+3. Test organization:
+   [ ] Tests embedded in implementing task (recommended)
+   [ ] Separate test tasks (only for E2E or contract tests)
+
+   Current assessment: [auto-filled based on spec]
+
+4. Any other decomposition preferences?
+   [ ] Use defaults above
+   [ ] Custom approach: _______________
+```
+
+### Phase 3 — Write Task Files
+
+Write both Markdown (human-readable) and JSON (machine-readable) outputs.
+
+#### Task Schema (JSON)
+
+```json
+{
+  "id": "TASK-epic-01-01",
+  "title": "Add message creation endpoint with validation",
+  "description": "Implement POST /api/v1/messages endpoint with field validation, sender/receiver institution validation, and message definition lookup. Creates message in DRAFT status if valid, VALIDATION_FAILED if invalid.",
+  "epic": "epic-01-message-creation-service",
+  "dependsOn": [],
+  "blocked": false,
+  "blockedReason": null,
+  "acceptanceCriteria": [
+    "Valid message request returns 201 with message ID",
+    "Missing required fields returns 400 with MSG-001 error",
+    "Invalid sender institution returns 400 with MSG-010 error",
+    "Message created with DRAFT status when valid"
+  ],
+  "standardsRefs": [
+    "api-and-messaging.md#url-structure",
+    "api-and-messaging.md#http-status-codes",
+    "api-and-messaging.md#error-codes",
+    "security-and-auth.md#oauth2-resource-server",
+    "coding-conventions.md#layering-pattern"
+  ],
+  "estimatedComplexity": "M",
+  "filesAffected": [
+    "src/main/java/com/bank/messaging/controller/MessageController.java",
+    "src/main/java/com/bank/messaging/service/MessageService.java",
+    "src/main/java/com/bank/messaging/dto/MessageRequest.java",
+    "src/main/java/com/bank/messaging/dto/MessageResponse.java",
+    "src/test/java/com/bank/messaging/controller/MessageControllerTest.java"
+  ],
+  "testStrategy": "Unit test for controller validation, integration test for end-to-end flow with Testcontainers"
+}
+```
+
+#### Markdown Output Format
+
+```markdown
+# Task List: EPIC-01 Message Creation Service
+
+**Epic**: epic-01-message-creation-service
+**Spec**: specs/epic-01-message-creation-service/spec.md
+**Generated**: 2026-08-09
+**Confidence**: 8/10 — All ACs mapped, one architectural decision deferred to implementation
+
+---
+
+## Task Summary
+
+| ID | Title | Complexity | Depends On | Status |
+|----|-------|------------|------------|--------|
+| TASK-epic-01-01 | Add message creation endpoint | M | — | pending |
+| TASK-epic-01-02 | Add message validation service | S | TASK-epic-01-01 | pending |
+| TASK-epic-01-03 | Add institution validation integration | M | TASK-epic-01-02 | pending |
+
+---
+
+## TASK-epic-01-01: Add message creation endpoint with validation
+
+**Complexity**: M
+**Depends On**: —
+**Status**: pending
+
+### Description
+
+Implement POST /api/v1/messages endpoint with field validation, sender/receiver institution validation, and message definition lookup. Creates message in DRAFT status if valid, VALIDATION_FAILED if invalid.
+
+### Acceptance Criteria
+
+- [ ] Valid message request returns 201 with message ID
+- [ ] Missing required fields returns 400 with MSG-001 error
+- [ ] Invalid sender institution returns 400 with MSG-010 error
+- [ ] Message created with DRAFT status when valid
+
+### Standards References
+
+- `api-and-messaging.md#url-structure` — Endpoint must follow /api/v{N}/{resource} pattern
+- `api-and-messaging.md#http-status-codes` — Use 201 for created, 400 for validation errors
+- `api-and-messaging.md#error-codes` — Use MSG-XXX format, Persian messages
+- `security-and-auth.md#oauth2-resource-server` — Endpoint protected by OAuth2
+- `coding-conventions.md#layering-pattern` — Controller → Service → Repository
+
+### Files Affected
+
+- `src/main/java/com/bank/messaging/controller/MessageController.java`
+- `src/main/java/com/bank/messaging/service/MessageService.java`
+- `src/main/java/com/bank/messaging/dto/MessageRequest.java`
+- `src/main/java/com/bank/messaging/dto/MessageResponse.java`
+- `src/test/java/com/bank/messaging/controller/MessageControllerTest.java`
+
+### Test Strategy
+
+Unit test for controller validation, integration test for end-to-end flow with Testcontainers
+
+---
+
+## TASK-epic-01-02: Add message validation service
+
+[... same structure ...]
+
+---
+
+## Confidence Assessment
+
+**Score**: 8/10
+
+**Reason**: All acceptance criteria from spec mapped to tasks. One architectural decision (caching strategy for message definitions) deferred to implementation task TASK-epic-01-02.
+
+**Standards Compliance**: All tasks reference applicable `/standards/*.md` sections.
+
+**Blocked Tasks**: 0
+
+**Open Questions**: 1 (caching strategy — see spec TQ-03)
+```
+
+#### JSON Output Format
+
+```json
+{
+  "epic": "epic-01-message-creation-service",
+  "specPath": "specs/epic-01-message-creation-service/spec.md",
+  "generated": "2026-08-09T19:52:17.264Z",
+  "confidence": {
+    "score": 8,
+    "maxScore": 10,
+    "reason": "All ACs mapped, one architectural decision deferred to implementation"
+  },
+  "tasks": [
+    {
+      "id": "TASK-epic-01-01",
+      "title": "Add message creation endpoint with validation",
+      "description": "Implement POST /api/v1/messages endpoint...",
+      "epic": "epic-01-message-creation-service",
+      "dependsOn": [],
+      "blocked": false,
+      "blockedReason": null,
+      "acceptanceCriteria": [
+        "Valid message request returns 201 with message ID",
+        "Missing required fields returns 400 with MSG-001 error",
+        "Invalid sender institution returns 400 with MSG-010 error",
+        "Message created with DRAFT status when valid"
+      ],
+      "standardsRefs": [
+        "api-and-messaging.md#url-structure",
+        "api-and-messaging.md#http-status-codes",
+        "api-and-messaging.md#error-codes",
+        "security-and-auth.md#oauth2-resource-server",
+        "coding-conventions.md#layering-pattern"
+      ],
+      "estimatedComplexity": "M",
+      "filesAffected": [
+        "src/main/java/com/bank/messaging/controller/MessageController.java",
+        "src/main/java/com/bank/messaging/service/MessageService.java",
+        "src/main/java/com/bank/messaging/dto/MessageRequest.java",
+        "src/main/java/com/bank/messaging/dto/MessageResponse.java",
+        "src/test/java/com/bank/messaging/controller/MessageControllerTest.java"
+      ],
+      "testStrategy": "Unit test for controller validation, integration test for end-to-end flow with Testcontainers"
+    }
+  ],
+  "standardsApplied": [
+    "api-and-messaging.md",
+    "security-and-auth.md",
+    "coding-conventions.md"
+  ]
+}
+```
+
+### Phase 4 — Validation
+
+Before writing files, validate:
+
+1. **All ACs covered**: Each acceptance criterion from spec appears in at least one task's `acceptanceCriteria`
+2. **Dependency graph is valid**: No circular dependencies, all `dependsOn` IDs exist
+3. **Standards references exist**: All `standardsRefs` point to valid `/standards/*.md` sections
+4. **Complexity sum matches epic size**: Sum of task complexities should roughly match epic scope
+
+Report any gaps in the confidence score.
+
+## Task ID Derivation
+
+```
+TASK-{epic-slug}-{sequence}
+
+where:
+  epic-slug = epic-01-message-creation-service
+  sequence = 01, 02, 03, ... (zero-padded, 2 digits)
+```
+
+## Complexity Estimation
+
+| Size | Heuristic |
+|------|-----------|
+| S | Single file, <50 lines, no external dependencies |
+| M | 2-5 files, 50-200 lines, existing patterns |
+| L | >5 files, >200 lines, new patterns or integrations |
+
+**Not a time estimate** — a signal to the human for prioritization and risk assessment.
+
+## Hard Rules
+
+1. Never create tasks without tracing to spec acceptance criteria
+2. Never skip standards validation if `/standards/*.md` exists
+3. Never create circular dependencies
+4. Never auto-create Jira tickets — only produce the task list artifact
+5. Never guess file paths if `/knowledge/*.md` exists — use real paths
+6. Always compute confidence score — even if 10/10
+7. Always write both `.md` and `.json` outputs — they're consumed by different tools
+8. Always mark tasks blocked by unresolved Technical Questions from spec as `blocked: true`
+
+## Exit Criteria
+
+Skill is done when:
+1. Both `/tasks/<epic-slug>-tasks.md` and `/tasks/<epic-slug>-tasks.json` written
+2. All acceptance criteria from spec mapped to tasks
+3. Dependency graph validated (no cycles)
+4. Confidence score computed and explained
+5. Any blocked tasks clearly flagged
+
+---
+
+## Consumption Contract
+
+### implement-epic
+
+When consuming this task list:
+
+1. **Dependency ordering**: Tasks must be executed in topological order respecting `dependsOn`
+   - Use Kahn's algorithm or similar to derive execution order
+   - If task A depends on task B, B must be marked `done` before A starts
+
+2. **Task status**: Only `implement-epic` writes status to tasks
+   - Read status from `.json` file at start of each task
+   - Write `done` or `blocked` after implementation attempt
+
+3. **Standards compliance**: Validate implementation against `standardsRefs`
+   - Each ref is a file#section anchor (e.g., `api-and-messaging.md#url-structure`)
+   - Read the referenced section before implementing
+   - Flag violations in implementation report
+
+4. **Test execution**: Use `testStrategy` field to determine test scope
+   - Run tests as part of each task's TDD cycle
+   - Integration tests may span multiple tasks (note in task description)
+
+### Jira Sync (Separate Step)
+
+When syncing tasks to Jira (manual, human-triggered action):
+
+```
+Task JSON Field          → Jira Field
+─────────────────────────────────────────────────────
+id                       → Label or custom field (for traceability)
+title                    → Summary
+description              → Description
+epic                     → Parent Epic link (Jira Epic issue)
+dependsOn                → Issue Links (blocks/blocked-by relationship)
+acceptanceCriteria       → Description (checkbox format)
+standardsRefs            → Comment or label (e.g., "standards:api-and-messaging")
+estimatedComplexity      → Story Points (map: S=1, M=3, L=5 or custom)
+filesAffected            → Description (affected files section)
+testStrategy             → Description (test strategy section)
+```
+
+**Jira Sync Process** (not part of this skill):
+
+1. Read `/tasks/<epic-slug>-tasks.json`
+2. For each task:
+   - Create Jira issue with mapped fields
+   - Link dependencies using Jira issue links
+   - Store Jira issue ID back to JSON (optional, for bidirectional traceability)
+3. Report created issues to user
+
+**This skill does NOT perform the sync** — it only produces the artifact that makes sync possible.
