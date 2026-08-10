@@ -44,7 +44,7 @@ lists `records/`, `validator/`, and `util/` packages that do not exist in
 
 ### Q1. Which architecture style is authoritative for this project? *(required — select one)*
 
-- [ ] Layered (controller → service → repository) — matches the shipped code today  ← recommended
+- [x] Layered (controller → service → repository) — matches the shipped code today  ← recommended
 - [ ] Hexagonal / Ports & Adapters — domain core with driven/driving adapters
 - [ ] Clean Architecture — entities / use-cases / interface-adapters / frameworks
 - [ ] Modular Monolith — feature modules with enforced internal boundaries
@@ -52,20 +52,20 @@ lists `records/`, `validator/`, and `util/` packages that do not exist in
 ### Q2. How are module boundaries enforced? *(required — select one)*
 
 - [ ] Convention only — package layout, reviewed by humans in PR
-- [ ] ArchUnit tests in the build — violations fail `mvn test`  ← recommended
+- [x] ArchUnit tests in the build — violations fail `mvn test`  ← recommended
 - [ ] Maven multi-module — compile-time isolation
 - [ ] Not enforced for now — revisit when the service grows
 
 ### Q3. What is the dependency-direction rule? *(required — select one)*
 
-- [ ] Strictly downward: controller → service → repository; no upward or skip-level calls  ← recommended
+- [x] Strictly downward: controller → service → repository; no upward or skip-level calls  ← recommended
 - [ ] Downward, but controllers may call repositories directly for read-only queries
 - [ ] Dependencies point inward to the domain; outer layers depend on interfaces owned by inner layers
 - [ ] No formal rule — reviewer discretion
 
 ### Q4. May a service call another service in the same application? *(required — select one)*
 
-- [ ] Yes, freely — services compose by direct injection  ← recommended
+- [x] Yes, freely — services compose by direct injection  ← recommended
 - [ ] Yes, but only via an interface, never a concrete class
 - [ ] No — orchestration happens only in a dedicated orchestrator/facade service
 - [ ] No — services are strictly independent; the controller orchestrates
@@ -82,7 +82,7 @@ lists `records/`, `validator/`, and `util/` packages that do not exist in
 - [ ] **Retrofit now** — a dedicated remediation epic brings existing endpoints to SWA_101 before any new epic starts
 - [ ] **Grandfather + forward-conform** — existing endpoints stay as-is under `/api/v1/`; all *new* endpoints follow SWA_101; an ADR records the exception and its removal schedule  ← recommended
 - [ ] **Retrofit at next major version** — conform when `/v2/` is cut; `/api/v1/` frozen and deprecated
-- [ ] **Full immediate rewrite** — breaking change accepted now, consumers coordinated
+- [x] **Full immediate rewrite** — breaking change accepted now, consumers coordinated
 
 ### Q6. Are the legacy envelope fields `RsCode` and `IsSuccess` included in responses? *(required — select one)*
 
@@ -90,7 +90,7 @@ SWA_101 §3 marks both as "LEGACY ONLY — include for backward compat, remove o
 
 - [ ] Yes — include both, for compatibility with existing Dotin consumers
 - [ ] Yes — include both, and record the removal date in an ADR  ← recommended
-- [ ] No — this is a new API surface with no legacy consumers; omit them
+- [x] No — this is a new API surface with no legacy consumers; omit them
 - [ ] [TBD — needs input from the consuming International Team]
 
 ### Q7. What `issuer` code identifies this service in the SWA_101 error object? *(required — free text)*
@@ -98,11 +98,11 @@ SWA_101 §3 marks both as "LEGACY ONLY — include for backward compat, remove o
 SWA_101 §3 requires 2–6 uppercase characters, unique per product/service.
 Custom error codes must start at **201** (1–200 are globally reserved).
 
-**Answer:** `________`  (e.g. `FMP`, `MSG`, `SWIFT`)
+**Answer:** `___FMP_____`  (e.g. `FMP`, `MSG`, `SWIFT`)
 
 ### Q8. How do the existing `MSG-XXX` error codes map to SWA_101 integer codes? *(required — select one)*
 
-- [ ] Renumber from 201 upward, preserving the existing order (`MSG-001` → 201, `MSG-003` → 202, …)  ← recommended
+- [x] Renumber from 201 upward, preserving the existing order (`MSG-001` → 201, `MSG-003` → 202, …)  ← recommended
 - [ ] Renumber by category, leaving gaps for growth (validation 201–219, definition 220–239, institution 240–259)
 - [ ] Keep `MSG-XXX` in the `details.path` field and assign a single generic integer code per HTTP status
 - [ ] Deferred — depends on the Q5 posture; do not map yet
@@ -115,14 +115,14 @@ Custom error codes must start at **201** (1–200 are globally reserved).
 
 - [ ] Now — as a shared filter/interceptor, before the next epic  ← recommended
 - [ ] Next epic — accepted as a known gap, tracked by an ADR
-- [ ] Only on endpoints that mutate state (`POST`/`PUT`), never on `GET`
+- [x] Only on endpoints that mutate state (`POST`/`PUT`), never on `GET`
 - [ ] Deferred indefinitely — this service has no retry-sensitive consumers
 
 ### Q10. Where is the idempotency key + response cached? *(required — select one)*
 
 - [ ] PostgreSQL table — survives restart, works across instances  ← recommended
 - [ ] Caffeine (the existing in-memory cache) — simple, lost on restart, wrong under multi-instance
-- [ ] Redis — shared across instances, requires new infrastructure
+- [x] Redis — shared across instances, requires new infrastructure
 - [ ] [TBD — needs input]
 
 ### Q11. Is a body **fingerprint** stored alongside the idempotency key? *(required — select one)*
@@ -136,7 +136,7 @@ SWA_101 §8 recommends it, to return `409`/code `105` on a payload mismatch.
 
 ### Q12. When is OpenTelemetry + `traceparent` (SWA_101 §10) implemented? *(required — select one)*
 
-- [ ] Now — Spring Boot OTel starter, before the next epic  ← recommended
+- [x] Now — Spring Boot OTel starter, before the next epic  ← recommended
 - [ ] Next epic — accepted gap, tracked by an ADR
 - [ ] Only propagate `traceparent` for now; defer span export to a collector
 - [ ] Deferred indefinitely
@@ -146,7 +146,7 @@ SWA_101 §8 recommends it, to return `409`/code `105` on a payload mismatch.
 This is the heaviest lift in the standard and needs a key-distribution answer.
 
 - [ ] Now — blocking requirement before the next epic
-- [ ] Next epic — accepted gap, tracked by an ADR with a named owner  ← recommended
+- [x] Next epic — accepted gap, tracked by an ADR with a named owner  ← recommended
 - [ ] Only for inter-service (service-to-service) calls, not for calls from the International Team
 - [ ] [TBD — needs input from the security/platform team]
 
@@ -158,14 +158,14 @@ Determines whether SWA_101 §7 channel naming and a SAW_102 AsyncAPI spec apply 
 - [ ] Yes — publishes domain events (e.g. message-created / validation-failed)
 - [ ] Yes — consumes commands from another system
 - [ ] Yes — both publishes and consumes
-- [ ] Not yet, but planned within the next two epics
+- [x] Not yet, but planned within the next two epics
 
 ### Q15. If async applies, what are the `system` and `domain` segments of the channel name? *(optional — free text)*
 
 SWA_101 §7 pattern: `corridor.[system].[domain].{component}.[event|command].[topic|queue].v[N]`
 
-**system:** `________`  (e.g. `core`, `esb`, `switch`)
-**domain:** `________`  (e.g. `messaging`, `deposit`)
+**system:** `_____core___`  (e.g. `core`, `esb`, `switch`)
+**domain:** `___messaging_____`  (e.g. `messaging`, `deposit`)
 
 ---
 
@@ -209,7 +209,7 @@ SAW_102 §3/§9 mandate draw.io on Confluence for C4 and ERD, with `README.md` f
 
 ### Q20. The existing docs contain claims contradicted by the code (Spring Boot 4.x vs. 3.3.2; `records/`, `validator/`, `util/` packages that do not exist). How are these resolved? *(required — select one)*
 
-- [ ] Correct them to match the verified code, and note the correction in Iteration History  ← recommended
+- [x] Correct them to match the verified code, and note the correction in Iteration History  ← recommended
 - [ ] The doc states intent, not current state — keep them as the target and mark the gap under Open Issues
 - [ ] Drop the contradicted claims entirely and mark each `[TBD — needs input]`
 - [ ] [TBD — needs input]
@@ -218,7 +218,7 @@ SAW_102 §3/§9 mandate draw.io on Confluence for C4 and ERD, with `README.md` f
 
 The skill omits one by default unless there is a real user-facing interface.
 
-- [ ] No — this is a headless REST API; Swagger UI is a developer tool, not a product surface  ← recommended
+- [x] No — this is a headless REST API; Swagger UI is a developer tool, not a product surface  ← recommended
 - [ ] Yes — there is a user-facing interface not visible in this repo
 - [ ] [TBD — needs input]
 
@@ -232,7 +232,7 @@ The existing doc claims "Docker on standalone servers, path to Kubernetes" — u
 
 - [ ] Docker on standalone servers, single instance
 - [ ] Kubernetes
-- [ ] Docker now, Kubernetes within the year  ← recommended
+- [x] Docker now, Kubernetes within the year  ← recommended
 - [ ] [TBD — needs input]
 
 ### Q23. Anything else that constrains the architecture and is not captured above? *(optional — free text)*
