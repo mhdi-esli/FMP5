@@ -35,7 +35,7 @@
       "Bash(mvn -q -o test *)",
       "Bash(mvn -v)",
       "Bash(mvn -q -DskipTests compile)",
-      "Bash(./mvnw dependency:tree)",
+      "Bash(./mvnw dependency:tree)"
     ]
   }
 }

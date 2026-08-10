@@ -6,7 +6,7 @@ spring:
     name: financial-messaging-platform
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/messaging
+    url: jdbc:postgresql://localhost:5434/messaging
     username: messaging_user
     password: messaging_password
     driver-class-name: org.postgresql.Driver
