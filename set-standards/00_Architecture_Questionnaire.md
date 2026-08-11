@@ -129,7 +129,7 @@ Custom error codes must start at **201** (1–200 are globally reserved).
 
 SWA_101 §8 recommends it, to return `409`/code `105` on a payload mismatch.
 
-- [ ] Yes — SHA-256 of the canonicalized request body  ← recommended
+- [x] Yes — SHA-256 of the canonicalized request body  ← recommended
 - [ ] Yes — checksum over selected business fields only
 - [ ] No — key-only; treat any reuse of the key as a replay
 - [ ] [TBD — needs input]
@@ -175,14 +175,14 @@ SWA_101 §7 pattern: `corridor.[system].[domain].{component}.[event|command].[to
 
 Three epics have already shipped, so "existing product" is defensible; the repo is also only weeks old.
 
-- [ ] **Existing product** — phased rollout: C4 in Phase 1, ADRs in Phase 2, Context Map / OpenAPI / AsyncAPI in Phase 3  ← recommended
+- [x] **Existing product** — phased rollout: C4 in Phase 1, ADRs in Phase 2, Context Map / OpenAPI / AsyncAPI in Phase 3  ← recommended
 - [ ] **New product** — all artifacts required from day 1
 - [ ] Existing product, but accelerate ADRs to Phase 1 (decisions are being made now and will be lost otherwise)
 - [ ] [TBD — needs input]
 
 ### Q17. SAW_102 §2 mandates docs under `/documents/`. The repo currently has `docs/` and `specs/`. How is this reconciled? *(required — select one)*
 
-- [ ] Create `/documents/` per SAW_102; leave `docs/` and `specs/` as SDD working artifacts  ← recommended
+- [x] Create `/documents/` per SAW_102; leave `docs/` and `specs/` as SDD working artifacts  ← recommended
 - [ ] Rename `docs/` → `documents/` and restructure to the SAW_102 subfolder layout
 - [ ] Keep `docs/`, and record a documented deviation from SAW_102 §2 in an ADR
 - [ ] [TBD — needs input]
@@ -191,7 +191,7 @@ Three epics have already shipped, so "existing product" is defensible; the repo 
 
 SAW_102 §3/§9 mandate draw.io on Confluence for C4 and ERD, with `README.md` files holding the links.
 
-- [ ] Yes — Confluence is available; diagrams go there and READMEs link to them  ← recommended
+- [x] Yes — Confluence is available; diagrams go there and READMEs link to them  ← recommended
 - [ ] No Confluence access — diagrams stay in-repo, deviation recorded in an ADR
 - [ ] Confluence exists but is not yet provisioned for this team — link placeholders for now
 - [ ] [TBD — needs input]
@@ -202,7 +202,7 @@ SAW_102 §3/§9 mandate draw.io on Confluence for C4 and ERD, with `README.md` f
 
 ### Q19. `.claude/_architecture-reference.md` and `.claude/_coding-guidelines.md` already exist (dated 2026-07-26, written before these standards). How should they be treated? *(required — select one)*
 
-- [ ] **Restructure to the skill's section list, preserving every still-accurate decision**, and log all changes in Iteration History  ← recommended
+- [x] **Restructure to the skill's section list, preserving every still-accurate decision**, and log all changes in Iteration History  ← recommended
 - [ ] Rewrite from scratch using only answers in these questionnaires — discard unconfirmed prior content
 - [ ] Leave them untouched; write the SWA_101/SAW_102 rules into new, separate files
 - [ ] Restructure, but first show me a diff of what would be dropped
@@ -240,5 +240,5 @@ The existing doc claims "Docker on standalone servers, path to Kubernetes" — u
 Regulatory constraints, data-residency rules, mandated platform services, capacity targets, hard deadlines:
 
 ```
-(your answer here)
+about question 13 in document SWA_101-comm-standards.md it is JWT  request's pyload not request payload so it doen't need sing request payload 
 ```
