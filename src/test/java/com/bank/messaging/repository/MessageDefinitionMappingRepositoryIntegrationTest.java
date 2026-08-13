@@ -2,7 +2,6 @@ package com.bank.messaging.repository;
 
 import com.bank.messaging.entity.MessageDefinitionMapping;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,9 +20,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * Integration tests for MessageDefinitionMappingRepository.
  */
-@DataJpaTest(excludeAutoConfiguration = org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration.class)
+@DataJpaTest
 @ActiveProfiles("test")
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class MessageDefinitionMappingRepositoryIntegrationTest {
 
     @Autowired

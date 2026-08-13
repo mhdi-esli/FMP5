@@ -3,7 +3,6 @@ package com.bank.messaging.repository;
 import com.bank.messaging.entity.Message;
 import com.bank.messaging.enums.MessageStatus;
 import com.bank.messaging.enums.Network;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Integration tests for MessageRepository.
  */
-@DataJpaTest(excludeAutoConfiguration = org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration.class)
+@DataJpaTest
 @ActiveProfiles("test")
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class MessageRepositoryIntegrationTest {
 
     @Autowired
