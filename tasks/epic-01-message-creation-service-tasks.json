@@ -1,0 +1,152 @@
+{
+  "epicId": "EPIC-01",
+  "epicTitle": "Message Creation Service",
+  "epicSlug": "epic-01-message-creation-service",
+  "tasks": [
+    {
+      "taskId": "TASK-epic-01-01",
+      "title": "Add message creation endpoint with validation",
+      "description": "Implement POST /api/v1/messages endpoint with full validation flow including institution and message definition lookups",
+      "acceptanceCriteria": [
+        "Valid message request returns 200 with message ID and DRAFT status",
+        "Missing required fields returns 400 with MSG-001 error in Persian",
+        "Invalid amount (zero or negative) returns 400 with MSG-001 error",
+        "Invalid network returns 400 with MSG-003 error",
+        "Invalid sender institution returns 400 with MSG-010 error",
+        "Invalid receiver institution returns 400 with MSG-011 error",
+        "Institution-network mismatch returns 400 with MSG-012 error",
+        "Request without OAuth token returns 401"
+      ],
+      "filesAffected": [
+        "src/main/java/com/bank/messaging/controller/MessageController.java",
+        "src/main/java/com/bank/messaging/service/MessageCreationService.java",
+        "src/main/java/com/bank/messaging/service/MessageValidationService.java",
+        "src/main/java/com/bank/messaging/dto/MessageRequest.java",
+        "src/main/java/com/bank/messaging/dto/MessageResponse.java",
+        "src/main/java/com/bank/messaging/dto/ValidationError.java"
+      ],
+      "standardsRefs": [
+        "api-and-messaging.md#url-structure",
+        "api-and-messaging.md#http-status-codes",
+        "api-and-messaging.md#error-codes",
+        "coding-conventions.md#layering-pattern"
+      ],
+      "jiraIssue": null
+    },
+    {
+      "taskId": "TASK-epic-01-02",
+      "title": "Add message validation service",
+      "description": "Implement field-level validation with comprehensive error collection and Persian messages",
+      "acceptanceCriteria": [
+        "Validates all required fields present",
+        "Returns Persian error messages for all validation failures",
+        "Validates amount > 0",
+        "Validates network is SWIFT or SEPA",
+        "Validates currency code format",
+        "Validates date format for valueDate",
+        "Collects all validation errors and returns them together"
+      ],
+      "filesAffected": [
+        "src/main/java/com/bank/messaging/service/MessageValidationService.java",
+        "src/main/java/com/bank/messaging/service/ValidationResult.java",
+        "src/main/java/com/bank/messaging/enums/ErrorCode.java"
+      ],
+      "standardsRefs": [
+        "api-and-messaging.md#validation",
+        "api-and-messaging.md#error-codes"
+      ],
+      "jiraIssue": null
+    },
+    {
+      "taskId": "TASK-epic-01-03",
+      "title": "Add message entity and repository",
+      "description": "Create JPA entity and repository for message persistence with JSONB support for validation errors",
+      "acceptanceCriteria": [
+        "Message entity maps to messages table",
+        "Validation errors stored as JSONB",
+        "Message ID format MSG-YYYYMMDD-NNNNNN persisted",
+        "Status field supports DRAFT and VALIDATION_FAILED",
+        "Created timestamp set automatically"
+      ],
+      "filesAffected": [
+        "src/main/java/com/bank/messaging/entity/Message.java",
+        "src/main/java/com/bank/messaging/repository/MessageRepository.java",
+        "src/main/resources/db/migration/V1__Initial_schema.sql"
+      ],
+      "standardsRefs": [
+        "database.md#jpa-entities",
+        "database.md#flyway-migrations"
+      ],
+      "jiraIssue": null
+    },
+    {
+      "taskId": "TASK-epic-01-04",
+      "title": "Add message ID generation",
+      "description": "Implement deterministic message ID generation with daily sequential numbering",
+      "acceptanceCriteria": [
+        "Format: MSG-YYYYMMDD-NNNNNN",
+        "Sequential within same day",
+        "Unique across concurrent requests",
+        "Thread-safe implementation"
+      ],
+      "filesAffected": [
+        "src/main/java/com/bank/messaging/service/MessageCreationService.java"
+      ],
+      "standardsRefs": [
+        "coding-conventions.md#naming-conventions"
+      ],
+      "jiraIssue": null
+    },
+    {
+      "taskId": "TASK-epic-01-05",
+      "title": "Add error handling and global exception handler",
+      "description": "Implement consistent error responses with Persian messages for all validation failures",
+      "acceptanceCriteria": [
+        "MethodArgumentNotValidException returns 400 with MSG-001",
+        "All error messages in Persian",
+        "Error response includes error code, field, and message",
+        "GlobalExceptionHandler applied to all endpoints"
+      ],
+      "filesAffected": [
+        "src/main/java/com/bank/messaging/exception/GlobalExceptionHandler.java",
+        "src/main/java/com/bank/messaging/exception/MessageValidationException.java"
+      ],
+      "standardsRefs": [
+        "api-and-messaging.md#error-codes",
+        "coding-conventions.md#exception-handling"
+      ],
+      "jiraIssue": null
+    },
+    {
+      "taskId": "TASK-epic-01-06",
+      "title": "Add tests for message creation",
+      "description": "Write unit, integration, and controller tests for all acceptance criteria",
+      "acceptanceCriteria": [
+        "MessageValidationServiceTest covers all validation scenarios (10 tests)",
+        "MessageCreationServiceTest covers service layer (6 tests)",
+        "MessageControllerTest covers all HTTP scenarios (6 tests)",
+        "MessageRepositoryIntegrationTest covers DB persistence (3 tests)",
+        "All tests use proper assertions and Persian message validation"
+      ],
+      "filesAffected": [
+        "src/test/java/com/bank/messaging/service/MessageValidationServiceTest.java",
+        "src/test/java/com/bank/messaging/service/MessageCreationServiceTest.java",
+        "src/test/java/com/bank/messaging/controller/MessageControllerTest.java",
+        "src/test/java/com/bank/messaging/repository/MessageRepositoryIntegrationTest.java"
+      ],
+      "standardsRefs": [
+        "testing.md#testing-pyramid",
+        "testing.md#test-naming-conventions"
+      ],
+      "jiraIssue": null
+    }
+  ],
+  "standards": [
+    "api-and-messaging.md",
+    "coding-conventions.md",
+    "testing.md",
+    "database.md",
+    "cache.md"
+  ],
+  "generatedAt": "2026-08-13T07:13:00Z"
+}

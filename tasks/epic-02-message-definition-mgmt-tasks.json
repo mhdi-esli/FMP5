@@ -1,0 +1,122 @@
+{
+  "epicId": "EPIC-02",
+  "epicTitle": "Message Definition Management",
+  "epicSlug": "epic-02-message-definition-mgmt",
+  "tasks": [
+    {
+      "taskId": "TASK-epic-02-01",
+      "title": "Add message definition CRUD endpoints",
+      "description": "Implement REST API for managing message definition templates with field mappings and validation rules",
+      "acceptanceCriteria": [
+        "Valid message definition request returns 201 with id, messageType, network, version",
+        "Duplicate definition (same type+network+version) returns 409 with MSG-008 error",
+        "Get definition by ID returns 200 or 404 with MSG-009",
+        "List definitions returns 200 with array (supports filtering by messageType, network, isActive)",
+        "Update definition returns 200 with updated fields or 404",
+        "Delete (soft-delete) definition returns 204 or 404"
+      ],
+      "filesAffected": [
+        "src/main/java/com/bank/messaging/controller/MessageDefinitionController.java",
+        "src/main/java/com/bank/messaging/service/MessageDefinitionService.java",
+        "src/main/java/com/bank/messaging/dto/MessageDefinitionRequest.java",
+        "src/main/java/com/bank/messaging/dto/MessageDefinitionResponse.java",
+        "src/main/java/com/bank/messaging/dto/FieldMapping.java",
+        "src/main/java/com/bank/messaging/dto/ValidationRule.java"
+      ],
+      "standardsRefs": [
+        "api-and-messaging.md#url-structure",
+        "api-and-messaging.md#http-status-codes",
+        "api-and-messaging.md#error-codes",
+        "coding-conventions.md#layering-pattern"
+      ],
+      "jiraIssue": null
+    },
+    {
+      "taskId": "TASK-epic-02-02",
+      "title": "Add message definition database migration",
+      "description": "Create Flyway migration to enrich message_definition_mappings with sample field mappings and validation rules",
+      "acceptanceCriteria": [
+        "V2 migration creates sample field mappings data",
+        "V2 migration creates sample validation rules data",
+        "Migration runs successfully without errors"
+      ],
+      "filesAffected": [
+        "src/main/resources/db/migration/V2__Enrich_message_definition_mappings.sql"
+      ],
+      "standardsRefs": [
+        "database.md#flyway-migrations"
+      ],
+      "jiraIssue": null
+    },
+    {
+      "taskId": "TASK-epic-02-03",
+      "title": "Add error codes and exception handlers",
+      "description": "Create MSG-008 and MSG-009 error codes with Persian messages and corresponding exception handlers",
+      "acceptanceCriteria": [
+        "MSG-008 error code added with Persian message for duplicate definition",
+        "MSG-009 error code added with Persian message for definition not found",
+        "GlobalExceptionHandler handles DuplicateDefinitionException with 409",
+        "GlobalExceptionHandler handles DefinitionNotFoundException with 404"
+      ],
+      "filesAffected": [
+        "src/main/java/com/bank/messaging/enums/ErrorCode.java",
+        "src/main/java/com/bank/messaging/exception/DuplicateDefinitionException.java",
+        "src/main/java/com/bank/messaging/exception/DefinitionNotFoundException.java",
+        "src/main/java/com/bank/messaging/exception/GlobalExceptionHandler.java"
+      ],
+      "standardsRefs": [
+        "api-and-messaging.md#error-codes"
+      ],
+      "jiraIssue": null
+    },
+    {
+      "taskId": "TASK-epic-02-04",
+      "title": "Add tests for message definition endpoints",
+      "description": "Write unit, integration, and controller tests for all CRUD operations",
+      "acceptanceCriteria": [
+        "MessageDefinitionServiceTest covers all CRUD methods (21 tests)",
+        "MessageDefinitionControllerTest covers all endpoints (14 tests)",
+        "MessageDefinitionMappingRepositoryIntegrationTest covers DB operations (10 tests)",
+        "All tests use proper assertions and Persian message validation"
+      ],
+      "filesAffected": [
+        "src/test/java/com/bank/messaging/service/MessageDefinitionServiceTest.java",
+        "src/test/java/com/bank/messaging/controller/MessageDefinitionControllerTest.java",
+        "src/test/java/com/bank/messaging/repository/MessageDefinitionMappingRepositoryIntegrationTest.java"
+      ],
+      "standardsRefs": [
+        "testing.md#testing-pyramid",
+        "testing.md#test-naming-conventions"
+      ],
+      "jiraIssue": null
+    },
+    {
+      "taskId": "TASK-epic-02-05",
+      "title": "EPIC-01 integration with message definition service",
+      "description": "Wire MessageDefinitionService into MessageCreationService for active definition lookup",
+      "acceptanceCriteria": [
+        "MessageCreationService uses MessageDefinitionService.findActiveDefinition()",
+        "EPIC-01 existing tests still pass after integration",
+        "Active definition lookup returns definition or empty Optional",
+        "Lookup cached with Caffeine (300s TTL)"
+      ],
+      "filesAffected": [
+        "src/main/java/com/bank/messaging/service/MessageCreationService.java",
+        "src/main/java/com/bank/messaging/repository/MessageDefinitionMappingRepository.java"
+      ],
+      "standardsRefs": [
+        "architecture.md#layering-pattern",
+        "cache.md#caffeine-caching"
+      ],
+      "jiraIssue": null
+    }
+  ],
+  "standards": [
+    "api-and-messaging.md",
+    "coding-conventions.md",
+    "testing.md",
+    "database.md",
+    "cache.md"
+  ],
+  "generatedAt": "2026-08-13T07:01:00Z"
+}
