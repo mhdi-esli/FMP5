@@ -1,14 +1,4 @@
 {
-
-  "hooks": {
-    "PreToolUse": [
-      { "matcher": "Read", "hooks": [{ "type": "command", "command": "./.claude/hooks/check-large-file.sh" }] },
-      { "matcher": "Read", "hooks": [{ "type": "command", "command": "./.claude/hooks/warn-growing-docs.sh" }] },
-      { "matcher": "Bash", "hooks": [{ "type": "command", "command": "./.claude/hooks/check-cat-bypass.sh" }] }
-
-    ]
-  },
-
   "permissions": {
     "allow": [
       "Bash(npm config *)",
@@ -42,7 +32,39 @@
       "Bash(mvn -q -o test *)",
       "Bash(mvn -v)",
       "Bash(mvn -q -DskipTests compile)",
-      "Bash(./mvnw dependency:tree)"
+      "Bash(./mvnw dependency:tree)",
+      "Bash(mvn -o test -Dtest='InstitutionControllerTest,InstitutionServiceTest,MessageControllerInstitutionValidationTest' -DfailIfNoTests=false)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./.claude/hooks/check-large-file.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./.claude/hooks/warn-growing-docs.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./.claude/hooks/check-cat-bypass.sh"
+          }
+        ]
+      }
     ]
   }
 }
