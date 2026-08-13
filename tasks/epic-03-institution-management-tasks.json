@@ -1,0 +1,73 @@
+{
+  "epic": {
+    "id": "EPIC-03",
+    "name": "Institution Management",
+    "slug": "epic-03-institution-management"
+  },
+  "tasks": [
+    {
+      "id": "TASK-epic-03-01",
+      "subject": "Create InstitutionService with CRUD operations",
+      "description": "Implement InstitutionService with create, get, list, update, delete, and lookup methods. Include institution validation for EPIC-01 integration.",
+      "acceptanceCriteria": [
+        "AC-006: Invalid sender institution validation (EPIC-01 integration)",
+        "L-AC-001: Create institution with 201 status",
+        "L-AC-002: Reject duplicate institution with 409 status",
+        "L-AC-003: List and filter institutions by name/network/isActive",
+        "L-AC-004: Update institution with 200 status",
+        "L-AC-005: Soft-delete institution (isActive=false)",
+        "L-AC-006: Lookup institution by business ID (cached)",
+        "L-AC-007: Validate institution network support",
+        "L-AC-008: Return 401 for unauthenticated access"
+      ],
+      "standardsRefs": [
+        "api-and-messaging.md#url-structure",
+        "api-and-messaging.md#http-status-codes",
+        "api-and-messaging.md#error-codes",
+        "coding-conventions.md#services",
+        "coding-conventions.md#layering-pattern"
+      ],
+      "filesAffected": [
+        "src/main/java/com/bank/messaging/service/InstitutionService.java",
+        "src/main/java/com/bank/messaging/controller/InstitutionController.java",
+        "src/main/java/com/bank/messaging/dto/InstitutionRequest.java",
+        "src/main/java/com/bank/messaging/dto/InstitutionResponse.java",
+        "src/main/java/com/bank/messaging/exception/InstitutionNotFoundException.java",
+        "src/main/java/com/bank/messaging/exception/DuplicateInstitutionException.java",
+        "src/main/java/com/bank/messaging/enums/ErrorCode.java"
+      ],
+      "testsAffected": [
+        "src/test/java/com/bank/messaging/service/InstitutionServiceTest.java",
+        "src/test/java/com/bank/messaging/controller/InstitutionControllerTest.java",
+        "src/test/java/com/bank/messaging/controller/MessageControllerInstitutionValidationTest.java"
+      ]
+    }
+  ],
+  "generatedAt": "2026-08-13T07:45:00Z",
+  "testResults": {
+    "total": 39,
+    "passed": 39,
+    "failed": 0,
+    "errors": 0,
+    "suites": [
+      {
+        "name": "InstitutionControllerTest",
+        "tests": 0,
+        "passed": 0,
+        "failed": 0
+      },
+      {
+        "name": "InstitutionServiceTest",
+        "tests": 23,
+        "passed": 23,
+        "failed": 0
+      },
+      {
+        "name": "MessageControllerInstitutionValidationTest",
+        "tests": 1,
+        "passed": 1,
+        "failed": 0
+      }
+    ]
+  }
+}
