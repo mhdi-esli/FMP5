@@ -34,7 +34,8 @@
       "Bash(mvn -q -DskipTests compile)",
       "Bash(./mvnw dependency:tree)",
       "Bash(mvn -o test -Dtest='InstitutionControllerTest,InstitutionServiceTest,MessageControllerInstitutionValidationTest' -DfailIfNoTests=false)",
-      "Bash(mvn test-compile *)"
+      "Bash(mvn test-compile *)",
+      "Bash(xargs ls -la)"
     ]
   },
   "hooks": {
