@@ -63,7 +63,7 @@ class InstitutionControllerTest {
             LocalDateTime.now(), LocalDateTime.now());
 
     @Nested
-    @DisplayName("POST /api/v1/institutions")
+    @DisplayName("POST /v1/institutions")
     class CreateInstitutionTests {
 
         @Test
@@ -74,7 +74,7 @@ class InstitutionControllerTest {
 
             when(institutionService.createInstitution(any())).thenReturn(sampleResponse);
 
-            mockMvc.perform(post("/api/v1/institutions")
+            mockMvc.perform(post("/v1/institutions")
                     .with(csrf())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
@@ -87,7 +87,7 @@ class InstitutionControllerTest {
         @Test
         @WithMockUser
         void postInstitution_invalidBody_returns400() throws Exception {
-            mockMvc.perform(post("/api/v1/institutions")
+            mockMvc.perform(post("/v1/institutions")
                     .with(csrf())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{}"))
@@ -103,7 +103,7 @@ class InstitutionControllerTest {
             when(institutionService.createInstitution(any()))
                     .thenThrow(new DuplicateInstitutionException("BANK01"));
 
-            mockMvc.perform(post("/api/v1/institutions")
+            mockMvc.perform(post("/v1/institutions")
                     .with(csrf())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
@@ -112,7 +112,7 @@ class InstitutionControllerTest {
     }
 
     @Nested
-    @DisplayName("GET /api/v1/institutions/{id}")
+    @DisplayName("GET /v1/institutions/{id}")
     class GetInstitutionTests {
 
         @Test
@@ -120,7 +120,7 @@ class InstitutionControllerTest {
         void getInstitution_existing_returns200() throws Exception {
             when(institutionService.getInstitution(1L)).thenReturn(sampleResponse);
 
-            mockMvc.perform(get("/api/v1/institutions/1")
+            mockMvc.perform(get("/v1/institutions/1")
                     .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
@@ -133,14 +133,14 @@ class InstitutionControllerTest {
             when(institutionService.getInstitution(999L))
                     .thenThrow(new InstitutionNotFoundException("999"));
 
-            mockMvc.perform(get("/api/v1/institutions/999")
+            mockMvc.perform(get("/v1/institutions/999")
                     .with(csrf()))
                 .andExpect(status().isNotFound());
         }
     }
 
     @Nested
-    @DisplayName("GET /api/v1/institutions")
+    @DisplayName("GET /v1/institutions")
     class ListInstitutionsTests {
 
         @Test
@@ -149,7 +149,7 @@ class InstitutionControllerTest {
             when(institutionService.listInstitutions(null, null, null))
                     .thenReturn(List.of(sampleResponse));
 
-            mockMvc.perform(get("/api/v1/institutions")
+            mockMvc.perform(get("/v1/institutions")
                     .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
@@ -162,7 +162,7 @@ class InstitutionControllerTest {
             when(institutionService.listInstitutions(null, "SWIFT", null))
                     .thenReturn(List.of(sampleResponse));
 
-            mockMvc.perform(get("/api/v1/institutions")
+            mockMvc.perform(get("/v1/institutions")
                     .with(csrf())
                     .param("network", "SWIFT"))
                 .andExpect(status().isOk())
@@ -171,7 +171,7 @@ class InstitutionControllerTest {
     }
 
     @Nested
-    @DisplayName("PUT /api/v1/institutions/{id}")
+    @DisplayName("PUT /v1/institutions/{id}")
     class UpdateInstitutionTests {
 
         @Test
@@ -182,7 +182,7 @@ class InstitutionControllerTest {
 
             when(institutionService.updateInstitution(eq(1L), any())).thenReturn(sampleResponse);
 
-            mockMvc.perform(put("/api/v1/institutions/1")
+            mockMvc.perform(put("/v1/institutions/1")
                     .with(csrf())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
@@ -199,7 +199,7 @@ class InstitutionControllerTest {
             when(institutionService.updateInstitution(eq(999L), any()))
                     .thenThrow(new InstitutionNotFoundException("999"));
 
-            mockMvc.perform(put("/api/v1/institutions/999")
+            mockMvc.perform(put("/v1/institutions/999")
                     .with(csrf())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
@@ -208,13 +208,13 @@ class InstitutionControllerTest {
     }
 
     @Nested
-    @DisplayName("DELETE /api/v1/institutions/{id}")
+    @DisplayName("DELETE /v1/institutions/{id}")
     class DeleteInstitutionTests {
 
         @Test
         @WithMockUser
         void deleteInstitution_existing_returns204() throws Exception {
-            mockMvc.perform(delete("/api/v1/institutions/1")
+            mockMvc.perform(delete("/v1/institutions/1")
                     .with(csrf()))
                 .andExpect(status().isNoContent());
         }
@@ -225,14 +225,14 @@ class InstitutionControllerTest {
             doThrow(new InstitutionNotFoundException("999"))
                     .when(institutionService).deleteInstitution(999L);
 
-            mockMvc.perform(delete("/api/v1/institutions/999")
+            mockMvc.perform(delete("/v1/institutions/999")
                     .with(csrf()))
                 .andExpect(status().isNotFound());
         }
     }
 
     @Nested
-    @DisplayName("GET /api/v1/institutions/lookup")
+    @DisplayName("GET /v1/institutions/lookup")
     class LookupInstitutionTests {
 
         @Test
@@ -244,7 +244,7 @@ class InstitutionControllerTest {
             when(institutionService.findByInstitutionId("BANK01"))
                     .thenReturn(Optional.of(entity));
 
-            mockMvc.perform(get("/api/v1/institutions/lookup")
+            mockMvc.perform(get("/v1/institutions/lookup")
                     .with(csrf())
                     .param("institutionId", "BANK01"))
                 .andExpect(status().isOk())
@@ -257,7 +257,7 @@ class InstitutionControllerTest {
             when(institutionService.findByInstitutionId("UNKNOWN"))
                     .thenReturn(Optional.empty());
 
-            mockMvc.perform(get("/api/v1/institutions/lookup")
+            mockMvc.perform(get("/v1/institutions/lookup")
                     .with(csrf())
                     .param("institutionId", "UNKNOWN"))
                 .andExpect(status().isNotFound());
@@ -273,7 +273,7 @@ class InstitutionControllerTest {
             InstitutionRequest request = new InstitutionRequest(
                     "BANK01", "BANK01XXX", "Bank One", "BR001", true, List.of("SWIFT", "SEPA"));
 
-            mockMvc.perform(post("/api/v1/institutions")
+            mockMvc.perform(post("/v1/institutions")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized());
@@ -281,7 +281,7 @@ class InstitutionControllerTest {
 
         @Test
         void getInstitutions_unauthorized_returns401() throws Exception {
-            mockMvc.perform(get("/api/v1/institutions"))
+            mockMvc.perform(get("/v1/institutions"))
                 .andExpect(status().isUnauthorized());
         }
     }

@@ -19,7 +19,7 @@ import java.util.List;
  * REST controller for managing financial institutions (EPIC-03).
  */
 @RestController
-@RequestMapping("/api/v1/institutions")
+@RequestMapping("/v1/institutions")
 @RequiredArgsConstructor
 @Tag(name = "Institutions", description = "CRUD operations for financial institutions")
 public class InstitutionController {

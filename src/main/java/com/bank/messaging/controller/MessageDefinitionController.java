@@ -19,7 +19,7 @@ import java.util.List;
  * REST controller for managing message definitions (EPIC-02).
  */
 @RestController
-@RequestMapping("/api/v1/message-definitions")
+@RequestMapping("/v1/message-definitions")
 @RequiredArgsConstructor
 @Tag(name = "Message Definitions", description = "CRUD operations for message definition mappings")
 public class MessageDefinitionController {

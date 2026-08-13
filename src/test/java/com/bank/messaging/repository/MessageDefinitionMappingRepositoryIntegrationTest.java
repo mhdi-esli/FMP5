@@ -22,7 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Integration tests for MessageDefinitionMappingRepository.
  */
 @DataJpaTest(excludeAutoConfiguration = org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration.class)
-@Disabled("Requires Docker-in-Docker, not available in this environment")
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class MessageDefinitionMappingRepositoryIntegrationTest {

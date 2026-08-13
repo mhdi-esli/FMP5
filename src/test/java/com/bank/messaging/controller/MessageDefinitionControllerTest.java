@@ -53,7 +53,7 @@ class MessageDefinitionControllerTest {
     );
 
     @Nested
-    @DisplayName("POST /api/v1/message-definitions")
+    @DisplayName("POST /v1/message-definitions")
     class CreateDefinitionTests {
 
         @Test
@@ -64,7 +64,7 @@ class MessageDefinitionControllerTest {
 
             when(definitionService.createDefinition(any())).thenReturn(sampleResponse);
 
-            mockMvc.perform(post("/api/v1/message-definitions")
+            mockMvc.perform(post("/v1/message-definitions")
                     .with(csrf())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
@@ -83,7 +83,7 @@ class MessageDefinitionControllerTest {
             when(definitionService.createDefinition(any()))
                     .thenThrow(new DuplicateDefinitionException("MT200", "SWIFT", 1));
 
-            mockMvc.perform(post("/api/v1/message-definitions")
+            mockMvc.perform(post("/v1/message-definitions")
                     .with(csrf())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
@@ -94,7 +94,7 @@ class MessageDefinitionControllerTest {
         @Test
         @WithMockUser
         void postMessageDefinition_noBody_returns400() throws Exception {
-            mockMvc.perform(post("/api/v1/message-definitions")
+            mockMvc.perform(post("/v1/message-definitions")
                     .with(csrf())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{}"))
@@ -103,7 +103,7 @@ class MessageDefinitionControllerTest {
     }
 
     @Nested
-    @DisplayName("GET /api/v1/message-definitions")
+    @DisplayName("GET /v1/message-definitions")
     class ListDefinitionsTests {
 
         @Test
@@ -112,7 +112,7 @@ class MessageDefinitionControllerTest {
             when(definitionService.listDefinitions(null, null, null))
                     .thenReturn(List.of(sampleResponse));
 
-            mockMvc.perform(get("/api/v1/message-definitions")
+            mockMvc.perform(get("/v1/message-definitions")
                     .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
@@ -125,7 +125,7 @@ class MessageDefinitionControllerTest {
             when(definitionService.listDefinitions("MT200", null, null))
                     .thenReturn(List.of(sampleResponse));
 
-            mockMvc.perform(get("/api/v1/message-definitions")
+            mockMvc.perform(get("/v1/message-definitions")
                     .with(csrf())
                     .param("messageType", "MT200"))
                 .andExpect(status().isOk())
@@ -134,7 +134,7 @@ class MessageDefinitionControllerTest {
     }
 
     @Nested
-    @DisplayName("GET /api/v1/message-definitions/{id}")
+    @DisplayName("GET /v1/message-definitions/{id}")
     class GetDefinitionTests {
 
         @Test
@@ -142,7 +142,7 @@ class MessageDefinitionControllerTest {
         void getMessageDefinition_existing_returns200() throws Exception {
             when(definitionService.getDefinition(1L)).thenReturn(sampleResponse);
 
-            mockMvc.perform(get("/api/v1/message-definitions/1")
+            mockMvc.perform(get("/v1/message-definitions/1")
                     .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1));
@@ -154,7 +154,7 @@ class MessageDefinitionControllerTest {
             when(definitionService.getDefinition(999L))
                     .thenThrow(new DefinitionNotFoundException(999L));
 
-            mockMvc.perform(get("/api/v1/message-definitions/999")
+            mockMvc.perform(get("/v1/message-definitions/999")
                     .with(csrf()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("MSG-009"));
@@ -162,7 +162,7 @@ class MessageDefinitionControllerTest {
     }
 
     @Nested
-    @DisplayName("PUT /api/v1/message-definitions/{id}")
+    @DisplayName("PUT /v1/message-definitions/{id}")
     class UpdateDefinitionTests {
 
         @Test
@@ -173,7 +173,7 @@ class MessageDefinitionControllerTest {
 
             when(definitionService.updateDefinition(eq(1L), any())).thenReturn(sampleResponse);
 
-            mockMvc.perform(put("/api/v1/message-definitions/1")
+            mockMvc.perform(put("/v1/message-definitions/1")
                     .with(csrf())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
@@ -190,7 +190,7 @@ class MessageDefinitionControllerTest {
             when(definitionService.updateDefinition(eq(999L), any()))
                     .thenThrow(new DefinitionNotFoundException(999L));
 
-            mockMvc.perform(put("/api/v1/message-definitions/999")
+            mockMvc.perform(put("/v1/message-definitions/999")
                     .with(csrf())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
@@ -200,13 +200,13 @@ class MessageDefinitionControllerTest {
     }
 
     @Nested
-    @DisplayName("DELETE /api/v1/message-definitions/{id}")
+    @DisplayName("DELETE /v1/message-definitions/{id}")
     class DeleteDefinitionTests {
 
         @Test
         @WithMockUser
         void deleteMessageDefinition_existing_returns204() throws Exception {
-            mockMvc.perform(delete("/api/v1/message-definitions/1")
+            mockMvc.perform(delete("/v1/message-definitions/1")
                     .with(csrf()))
                 .andExpect(status().isNoContent());
         }
@@ -217,7 +217,7 @@ class MessageDefinitionControllerTest {
             doThrow(new DefinitionNotFoundException(999L))
                     .when(definitionService).deleteDefinition(999L);
 
-            mockMvc.perform(delete("/api/v1/message-definitions/999")
+            mockMvc.perform(delete("/v1/message-definitions/999")
                     .with(csrf()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("MSG-009"));
@@ -225,7 +225,7 @@ class MessageDefinitionControllerTest {
     }
 
     @Nested
-    @DisplayName("GET /api/v1/message-definitions/lookup")
+    @DisplayName("GET /v1/message-definitions/lookup")
     class LookupDefinitionTests {
 
         @Test
@@ -234,7 +234,7 @@ class MessageDefinitionControllerTest {
             when(definitionService.findActiveDefinition("MT200", "SWIFT"))
                     .thenReturn(Optional.of(new com.bank.messaging.entity.MessageDefinitionMapping()));
 
-            mockMvc.perform(get("/api/v1/message-definitions/lookup")
+            mockMvc.perform(get("/v1/message-definitions/lookup")
                     .with(csrf())
                     .param("messageType", "MT200")
                     .param("network", "SWIFT"))
@@ -247,7 +247,7 @@ class MessageDefinitionControllerTest {
             when(definitionService.findActiveDefinition("UNKNOWN", "SWIFT"))
                     .thenReturn(Optional.empty());
 
-            mockMvc.perform(get("/api/v1/message-definitions/lookup")
+            mockMvc.perform(get("/v1/message-definitions/lookup")
                     .with(csrf())
                     .param("messageType", "UNKNOWN")
                     .param("network", "SWIFT"))
@@ -264,7 +264,7 @@ class MessageDefinitionControllerTest {
             MessageDefinitionRequest request = new MessageDefinitionRequest(
                     "MT200", "SWIFT", 1, null, null, true);
 
-            mockMvc.perform(post("/api/v1/message-definitions")
+            mockMvc.perform(post("/v1/message-definitions")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized());
@@ -272,7 +272,7 @@ class MessageDefinitionControllerTest {
 
         @Test
         void getMessageDefinitions_noToken_returns401() throws Exception {
-            mockMvc.perform(get("/api/v1/message-definitions"))
+            mockMvc.perform(get("/v1/message-definitions"))
                 .andExpect(status().isUnauthorized());
         }
     }

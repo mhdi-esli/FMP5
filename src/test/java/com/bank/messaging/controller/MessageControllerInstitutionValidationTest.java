@@ -86,7 +86,7 @@ class MessageControllerInstitutionValidationTest {
         when(institutionRepository.findByInstitutionId("UNKNOWN")).thenReturn(Optional.empty());
         when(messageRepository.save(any())).thenAnswer(invocation -> invocation.<Message>getArgument(0));
 
-        mockMvc.perform(post("/api/v1/messages")
+        mockMvc.perform(post("/v1/messages")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))

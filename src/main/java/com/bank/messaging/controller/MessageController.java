@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
  * REST Controller for financial message operations.
  */
 @RestController
-@RequestMapping("/api/v1/messages")
+@RequestMapping("/v1/messages")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Messages", description = "Financial message operations")

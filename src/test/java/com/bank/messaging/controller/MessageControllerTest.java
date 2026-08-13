@@ -91,7 +91,7 @@ class MessageControllerTest {
             when(messageCreationService.createMessage(any())).thenReturn(response);
 
             // When & Then
-            mockMvc.perform(post("/api/v1/messages")
+            mockMvc.perform(post("/v1/messages")
                     .with(csrf())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
@@ -125,7 +125,7 @@ class MessageControllerTest {
                 """;
 
             // When & Then
-            mockMvc.perform(post("/api/v1/messages")
+            mockMvc.perform(post("/v1/messages")
                     .with(csrf())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(invalidRequest))
@@ -146,7 +146,7 @@ class MessageControllerTest {
             MessageRequest request = validRequestBuilder.build();
 
             // When & Then
-            mockMvc.perform(post("/api/v1/messages")
+            mockMvc.perform(post("/v1/messages")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized());
@@ -179,7 +179,7 @@ class MessageControllerTest {
             when(messageCreationService.createMessage(any())).thenReturn(response);
 
             // When & Then
-            mockMvc.perform(post("/api/v1/messages")
+            mockMvc.perform(post("/v1/messages")
                     .with(csrf())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
@@ -215,7 +215,7 @@ class MessageControllerTest {
             when(messageCreationService.createMessage(any())).thenReturn(response);
 
             // When & Then
-            mockMvc.perform(post("/api/v1/messages")
+            mockMvc.perform(post("/v1/messages")
                     .with(csrf())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))

@@ -1,239 +1,109 @@
 # Architecture Reference
 
-**Last Updated:** 2026-07-26
-**Confidence Level:** 92%
+**Last Updated:** 2026-08-12
+**Confidence Level:** 100%
 
 This document is the authoritative source for architectural decisions in the Financial Messaging Platform. All advisors and skills must consult this before making recommendations.
 
 ---
 
-## Technology Stack
+## System Architecture
 
 | Component | Decision | Rationale |
 |-----------|----------|-----------|
-| Language | Java 21+ | Latest LTS with modern features |
-| Framework | Spring Boot 4.x | Enterprise standard, team expertise |
-| Database | PostgreSQL | Robust, JSON support, team familiarity |
-| Migrations | Flyway | Version-controlled, Spring Boot integration |
-| Caching | Caffeine (in-memory) | Simple, no external dependency, path to Redis |
-| Authentication | OAuth 2.0 via existing SSO | Integrates with current infrastructure |
-| Logging | Structured JSON + ELK | Matches existing observability stack |
-| Testing | JUnit 5 + Testcontainers + Pact | Full coverage: unit, integration, contract |
-| Documentation | OpenAPI 3.0 / Swagger | Auto-generated, interactive UI |
-| Deployment | Docker on standalone servers | Current infrastructure, path to Kubernetes |
+| Architecture Style | Layered Monolith | Simple, maintainable, team expertise |
+| Deployment | Docker now, Kubernetes within the year | Current infrastructure, path to K8s |
+| Service Communication | REST/HTTP (SWA_101 compliant) | Inter-service standards |
+
+### Major Components
+- `controller/` — HTTP endpoint layer
+- `service/` — Business logic layer
+- `repository/` — Data access layer
+- `dto/` — Data transfer objects (SWA_101 envelope: `resultData`/`message`/`errorList`)
+- `exception/` — Global exception handling with `@ControllerAdvice`
+- `config/` — Spring configuration
 
 ---
 
-## Architecture Style
+## Major Design Decisions
 
-**Decision:** Standard Spring Boot Layered Architecture
+| Decision | Details |
+|----------|---------|
+| URL Structure | `/v{major}/{resource}` (no `/api/` prefix per SWA_101 §1) |
+| Error Format | SWA_101 format: `issuer` (2-6 uppercase) + `code` (≥201) + `description` |
+| Validation | Bean Validation (JSR-380) + custom validators |
+| Testing Pyramid | 80% line coverage, JUnit 5 + Testcontainers + Pact |
+| Logging | Structured JSON to ELK stack |
 
+### Error Codes Mapping
+| Old Code | New SWA_101 Code | Issuer |
+|----------|------------------|--------|
+| MSG-001 to MSG-007 | 201-207 | `MGS` (Message service) |
+
+**Decision:** Collect all validation errors, return together in single response per SWA_101 §3.
+
+### Error Response Format
+```json
+{
+  "resultData": null,
+  "message": "درخواست نامعتبر است",
+  "errorList": [
+    {
+      "issuer": "MGS",
+      "code": 201,
+      "description": "Invalid ISO 4217 currency code"
+    }
+  ]
+}
 ```
-com.bank.messaging/
-├── controller/       # REST endpoints
-├── service/          # Business logic
-├── repository/       # Data access (Spring Data JPA)
-├── entity/           # JPA entities
-├── dto/              # Request/Response DTOs
-├── enums/            # MessageType, Network, Status, ErrorCodes
-├── records/          # MessageDefinition, ValidationRule
-├── config/           # Spring configuration
-├── exception/        # Global exception handling
-├── validator/        # Custom validation logic
-└── util/             # Helpers (correlation ID, etc.)
-```
-
-**Rationale:** Pragmatic, fastest to develop, team familiarity. Not Clean Architecture for this project.
 
 ---
 
-## System Boundaries
+## Constraints
 
-### In Scope (This Platform)
-
-| Boundary | Description |
-|----------|-------------|
-| Message Creation API | `POST /api/v1/messages` |
-| Message Validation | Field-level, business rules |
-| Message Persistence | PostgreSQL storage |
-| Message Definition Management | Configurable templates |
-| Institution Master Data | BIC, branch codes, active status |
-
-### Out of Scope (External Systems)
-
-| Boundary | Owner |
-|----------|-------|
-| Business validation (balance, limits) | Calling systems |
-| Actual SWIFT/SEPA transmission | Future epic |
-| User authentication | Existing SSO system |
-| Real-time tracking | Future epic |
-
----
-
-## Cross-Epic Dependencies
-
-```
-EPIC-01: Message Creation Service
-├── depends on → EPIC-02 (Message Definition Repository)
-│   └── Solution: Stub/fake implementation, swap when EPIC-02 ready
-└── depends on → EPIC-03 (Institution Repository)
-    └── Solution: Stub/fake implementation, swap when EPIC-03 ready
-
-EPIC-02: Message Definition Management
-└── no external dependencies
-
-EPIC-03: Institution Management
-└── no external dependencies
-```
-
-**Stub/Fake Pattern:**
-- Define interface in dependent epic
-- Implement stub for testing
-- Swap via `@Profile` or configuration when real implementation ready
-- No rework needed in dependent epic
-
----
-
-## Data Model
-
-### Core Entities
-
-```
-┌─────────────────┐     ┌─────────────────┐
-│     Message     │     │  Institution    │
-├─────────────────┤     ├─────────────────┤
-│ messageId       │     │ institutionId   │
-│ messageType     │     │ bic             │
-│ network         │     │ name            │
-│ status          │     │ branchId        │
-│ amount          │     │ isActive        │
-│ currency        │     │ supportedNetworks│
-│ senderInstId    │────▶│                 │
-│ receiverInstId  │────▶│                 │
-│ validationErrors│     │                 │
-│ createdAt       │     │                 │
-└─────────────────┘     └─────────────────┘
-
-┌─────────────────────────┐
-│ MessageDefinitionMapping│
-├─────────────────────────┤
-│ messageType             │
-│ network                 │
-│ version                 │
-│ isActive                │
-│ fieldMappings (JSONB)   │
-│ validationRules (JSONB) │
-└─────────────────────────┘
-```
-
-### Message ID Format
-
-**Decision:** `MSG-YYYYMMDD-NNNNNN` (sequential daily)
-
-Example: `MSG-20260725-000001`
-
-**Rationale:** Human-readable, matches PRD example, daily sequence.
-
----
-
-## Validation Strategy
-
-**Decision:** Collect all validation errors, return together
-
-| Aspect | Approach |
-|--------|----------|
-| Error collection | All errors in single response |
-| Error format | `{ code, field, message }` |
-| Message language | Persian |
-| Message storage | Java Enum with code and message fields |
-
-### Error Codes
-
-| Code | Message (Persian) |
-|------|-------------------|
-| MSG-000 | پیام با موفقیت ایجاد شد |
-| MSG-001 | اطلاعات ورودی معتبر نیست |
-| MSG-002 | نوع پیام معتبر نیست |
-| MSG-003 | شبکه انتخاب‌شده پشتیبانی نمی‌شود |
-| MSG-004 | Message Definition یافت نشد |
-| MSG-005 | Message Definition غیرفعال است |
-| MSG-006 | اعتبارسنجی پیام ناموفق بود |
-| MSG-007 | ایجاد پیام با خطا مواجه شد |
-
----
-
-## Performance Requirements
-
-| Metric | Target |
-|--------|--------|
-| API response time | < 500ms for validation |
-| Concurrent requests | 100 simultaneous |
+| Constraint | Details |
+|------------|---------|
+| Language | Java 21+ |
+| Framework | Spring Boot 4.x |
 | Database | PostgreSQL with JSONB for validation errors |
+| Migrations | Flyway |
+| Caching | Caffeine (in-memory), path to Redis |
 
 ---
 
-## Security Requirements
+## Key Dependencies
 
-| Aspect | Approach |
-|--------|----------|
-| Authentication | OAuth 2.0 via existing SSO |
-| Authorization | Token-based, user info from token |
-| Input validation | All fields validated before processing |
-| SQL injection | Parameterized queries only (JPA) |
-| Audit logging | All requests logged with correlation ID |
-
----
-
-## Scalability Considerations
-
-### Current Deployment
-
-- Docker on standalone servers
-- Single instance per service
-- PostgreSQL single instance
-
-### Future Path
-
-- Kubernetes deployment
-- Horizontal pod autoscaling
-- Redis cache (replace Caffeine)
-- Read replicas for PostgreSQL
+| Dependency | Purpose |
+|------------|---------|
+| Spring Boot 4.x | Enterprise framework |
+| PostgreSQL | Data persistence |
+| Flyway | Database migrations |
+| Caffeine | In-memory caching |
+| JUnit 5 + Testcontainers | Unit and integration testing |
+| Pact | Contract testing |
+| SLF4J + Logback | Structured JSON logging |
+| SpringDoc | OpenAPI 3.0 generation |
 
 ---
 
-## Integration Points
+## Development Patterns
 
-### Inbound
-
-| Consumer | Protocol | Auth |
-|----------|----------|------|
-| International Team | REST/JSON | OAuth 2.0 |
-
-### Outbound
-
-| Provider | Protocol | Purpose |
-|----------|----------|---------|
-| SSO System | OAuth 2.0 | Token validation |
-| PostgreSQL | JDBC | Data persistence |
-| ELK Stack | TCP/HTTP | Structured logging |
+| Pattern | When to Use |
+|---------|-------------|
+| DTO Envelope | All API responses (SWA_101 `resultData`/`message`/`errorList`) |
+| Global Exception Handler | `@ControllerAdvice` for all exceptions |
+| Bean Validation | Request parameter validation |
+| Service Layer | Business logic separation |
+| Repository Pattern | Data access abstraction |
 
 ---
 
-## Standards Update Process
+## Open Issues
 
-When a decision has cross-epic implications:
-
-1. Document the proposed change
-2. Run `/set-standards` (if skill exists) or manual update
-3. Update `_architecture-reference.md`
-4. Notify affected epics
-
-**This document is the single source of truth. Advisors must read it fresh on each invocation.**
+None. All required questions answered.
 
 ---
 
-## References
+## Iteration History
 
-- PRD: `docs/PRD.md`
-- EPIC-01 Spec: `specs/epic-01-message-creation-service/spec.md`
-- Original Requirements: `docs/MT200series-messages-document.md`
+- **2026-08-12** — Updated to reflect questionnaire answers. Fixed URL structure (removed `/api/` prefix), error format (SWA_101 compliant), and added completeness score.
