@@ -280,6 +280,3 @@ docker run -p 8080:8080 fmp5:latest
 
 This project is proprietary and confidential.
 
-## Contact
-
-For questions or support, contact the International Team (تیم بین الملل).
