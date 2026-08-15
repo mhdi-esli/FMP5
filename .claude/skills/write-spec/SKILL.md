@@ -18,6 +18,14 @@ Converts one named epic from an approved Epic PRD into a detailed technical spec
 
 ### Phase 0 — Preflight
 
+**Read the shared standards first**, in this fixed order — never directory-listing order, so the prompt prefix stays identical across runs and prompt caching engages:
+
+1. `.claude/_architecture-reference.md`
+2. `.claude/_coding-guidelines.md`
+3. `.claude/_documentation-standards.md`
+
+Follow their conventions if they exist. If any are missing, proceed but add a note under Risks recommending `set-standards` be run before further epics are built. Then continue with the checks below.
+
 1. Confirm `brainstorm/Epic_PRD.md` exists (fallback: `docs/PRD.md`)
 2. Verify the named epic is listed in the Epic Breakdown section
    - If epic not found, stop and list available epic IDs instead of guessing

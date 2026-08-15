@@ -37,6 +37,14 @@ Turn one epic's technical spec into an ordered, dependency-aware list of impleme
 
 ### Phase 0 — Preflight
 
+**Read the shared standards first**, in this fixed order — never directory-listing order, so the prompt prefix stays identical across runs and prompt caching engages:
+
+1. `.claude/_architecture-reference.md`
+2. `.claude/_coding-guidelines.md`
+3. `.claude/_documentation-standards.md`
+
+Follow their conventions if they exist. If any are missing, proceed but add a note under Risks recommending `set-standards` be run before further epics are built. Then continue with the checks below.
+
 1. Confirm `specs/<epic-slug>/spec.md` exists for the named epic
    - If not, stop and report: "No spec found. Run /write-spec first."
 2. Note the spec's own Confidence Level in the task list header, informationally — same as `write-spec` noted the PRD's confidence. Do not block on it; a spec with open technical questions can still produce a partial, honestly-marked task list.

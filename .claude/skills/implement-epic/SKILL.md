@@ -31,6 +31,14 @@ Implements one named epic using a strict per-unit TDD loop against its task list
 
 ### Phase 0 — Preflight
 
+**Read the shared standards first**, in this fixed order — never directory-listing order, so the prompt prefix stays identical across runs and prompt caching engages:
+
+1. `.claude/_architecture-reference.md`
+2. `.claude/_coding-guidelines.md`
+3. `.claude/_documentation-standards.md`
+
+Follow their conventions if they exist. If any are missing, proceed but add a note under Risks recommending `set-standards` be run before further epics are built. Then continue with the checks below.
+
 1. Confirm `specs/<epic-slug>/spec.md` exists
    - If not, stop and report missing spec
 2. Check for `specs/<epic-slug>/tasks.md`

@@ -43,6 +43,14 @@ This skill is the **terminal verification step** that:
 
 ### Phase 0 — Preflight
 
+**Read the shared standards first**, in this fixed order — never directory-listing order, so the prompt prefix stays identical across runs and prompt caching engages:
+
+1. `.claude/_architecture-reference.md`
+2. `.claude/_coding-guidelines.md`
+3. `.claude/_documentation-standards.md`
+
+Follow their conventions if they exist. If any are missing, proceed but add a note under Risks recommending `set-standards` be run before further epics are built. (This is distinct from the `/standards/*.md` compliance corpus loaded in step 3 below — these three are the durable reference docs.) Then continue with the checks below.
+
 1. Confirm `tasks/<epic-slug>-tasks.json` exists
    - If not, stop and report: "No task list found. Run /plan-tasks first."
 2. Confirm `specs/<epic-slug>/spec.md` exists

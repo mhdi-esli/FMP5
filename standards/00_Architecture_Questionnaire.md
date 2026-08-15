@@ -12,8 +12,8 @@ options you reject. A `← recommended` label is a suggestion only — it is
 ## Context you should know before answering
 
 **Sources already confirmed (you do NOT need to answer questions about these):**
-- `set-standards/reference/SWA_101-comm-standards.md` — inter-service communication
-- `set-standards/reference/SAW_102-arch-doc-standards.md` — architecture documentation
+- `standards/reference/SWA_101-comm-standards.md` — inter-service communication
+- `standards/reference/SAW_102-arch-doc-standards.md` — architecture documentation
 
 These are authoritative policy documents. Their rules are carried into the
 reference docs with citations, not offered as choices.

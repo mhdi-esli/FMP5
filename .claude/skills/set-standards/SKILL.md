@@ -23,7 +23,7 @@ Produce three durable reference documents — architecture principles, coding gu
 ## File Layout
 
 ```
-├── set-standards/
+├── standards/
 │   ├── reference/
 │   │   ├── SWA_101-comm-standards.md      (full source doc, stored verbatim)
 │   │   └── SAW_102-arch-doc-standards.md  (full source doc, stored verbatim)
@@ -34,7 +34,7 @@ Produce three durable reference documents — architecture principles, coding gu
 ├── .claude/_documentation-standards.md    (SAW_102-derived)
 ```
 
-No UX/design reference by default — drop it unless the project has an actual user-facing interface. If it does, add `.claude/_ux-reference.md` and `set-standards/00_UX_Questionnaire.md` following the identical pattern below.
+No UX/design reference by default — drop it unless the project has an actual user-facing interface. If it does, add `.claude/_ux-reference.md` and `standards/00_UX_Questionnaire.md` following the identical pattern below.
 
 ## Workflow — state machine
 
@@ -44,9 +44,11 @@ If `brainstorm/Epic_PRD.md` exists and has a populated Agentic Decisions section
 
 ### Phase 0b — External standards check (runs once, after Phase 0)
 
-If `set-standards/reference/*.md` files are present, treat them as a third legitimate source, same epistemic standing as a PRD carryover — not agent judgment, not a recommendation, an already-authorized policy document. Rules that trace to these files are pre-filled as confirmed content, labeled `(from SWA_101 §N)` / `(from SAW_102 §N)`, never presented as a questionnaire option or `← recommended` suggestion.
+If `standards/reference/*.md` files are present, treat them as a third legitimate source, same epistemic standing as a PRD carryover — not agent judgment, not a recommendation, an already-authorized policy document. Rules that trace to these files are pre-filled as confirmed content, labeled `(from SWA_101 §N)` / `(from SAW_102 §N)`, never presented as a questionnaire option or `← recommended` suggestion.
 
-Do not inline the full source documents into the ~150-line output files — extract only the specific enforceable rules relevant to each file's scope, and link back to the full source: `See set-standards/reference/SWA_101-comm-standards.md for the complete standard.` This keeps the 150-line cap intact while the full text stays available as ground truth if a later skill needs to check something not summarized.
+Read the two source files in this fixed order, always — never directory-listing order: `SWA_101-comm-standards.md`, then `SAW_102-arch-doc-standards.md`. This isn't arbitrary — it keeps the prompt prefix identical run to run so prompt caching engages on this (the most expensive, longest-lived) input.
+
+Do not inline the full source documents into the ~150-line output files — extract only the specific enforceable rules relevant to each file's scope, and link back to the full source: `See standards/reference/SWA_101-comm-standards.md for the complete standard.` This keeps the 150-line cap intact while the full text stays available as ground truth if a later skill needs to check something not summarized.
 
 **Routing (section-level, not whole-document):**
 - `_architecture-reference.md` ← SWA_101 §9 Security, §10 Distributed Tracing, §11 Protocol Selection, and the channel-naming-convention part of §7 only (these shape system topology / integration contracts and would warrant an ADR if changed).
@@ -55,9 +57,9 @@ Do not inline the full source documents into the ~150-line output files — extr
 
 ### Phase 1 — Generate questionnaires (if not yet created)
 
-Create `set-standards/00_Architecture_Questionnaire.md` covering: architecture style (Layered / Hexagonal — Ports & Adapters / Clean Architecture / Modular Monolith), module boundaries, dependency-direction rules, and any cross-cutting decision not already captured in the PRD.
+Create `standards/00_Architecture_Questionnaire.md` covering: architecture style (Layered / Hexagonal — Ports & Adapters / Clean Architecture / Modular Monolith), module boundaries, dependency-direction rules, and any cross-cutting decision not already captured in the PRD.
 
-Create `set-standards/00_Coding_Guidelines_Questionnaire.md` covering: naming conventions, package structure, testing-pyramid targets, code review/PR conventions, static analysis/linting tools, documentation conventions.
+Create `standards/00_Coding_Guidelines_Questionnaire.md` covering: naming conventions, package structure, testing-pyramid targets, code review/PR conventions, static analysis/linting tools, documentation conventions.
 
 Follow the exact same formatting rules as `brainstorm`: 2-5 options, `(select one)`/`(select all that apply)`, `(required)`/`(optional)`, exactly one `← recommended` label as text (never pre-checked, except for genuinely carried-over prior decisions as described in Phase 0), always `[ ]` never `[]`.
 
@@ -123,13 +125,17 @@ Same length cap and completeness-score treatment.
 
 ## Wiring into the rest of the pipeline
 
-This skill's output is inert unless the other four actually read it. Add this to the Phase 0/Preflight of `write-spec`, `plan-tasks`, `implement-epic`, and `verify-epic`:
+This skill's output is inert unless the other four actually read it. Add this to the Phase 0/Preflight of `write-spec`, `plan-tasks`, `implement-epic`, and `verify-epic`, and always list the three files in this exact fixed order — never directory-listing order, so the stable prefix stays identical across every skill's runs and prompt caching engages consistently project-wide:
 
 ```
-Read `.claude/_architecture-reference.md`, `.claude/_coding-guidelines.md`,
-and `.claude/_documentation-standards.md` if they exist, and follow their
-conventions. If any are missing, proceed but add a note under Risks
-recommending `set-standards` be run before further epics are built.
+Read these shared standards first, in this fixed order (never directory-listing
+order — a stable read order keeps the prompt prefix identical across runs so
+prompt caching engages):
+  1. .claude/_architecture-reference.md
+  2. .claude/_coding-guidelines.md
+  3. .claude/_documentation-standards.md
+Follow their conventions if they exist. If any are missing, proceed but add a
+note under Risks recommending set-standards be run before further epics are built.
 ```
 
 `brainstorm` doesn't need this — its questionnaire is business-level and predates these documents by design.
@@ -145,4 +151,5 @@ Done when both questionnaires (where required) are fully answered or explicitly 
 3. Never fabricate the completeness score — compute it from the parsed questionnaire files, per document.
 4. Never silently rewrite a human-edited reference document — preserve non-generated content and log what changed.
 5. Always write unchecked boxes as `[ ]` — never `[]`.
-6. A rule sourced from `set-standards/reference/*.md` is written into an output file only with its `(from SWA_101 §N)` / `(from SAW_102 §N)` citation intact — never merged into prose indistinguishably from a questionnaire-derived rule. This preserves traceability the same way `write-spec`'s Decision Log traces answers back to technical questions.
+6. A rule sourced from `standards/reference/*.md` is written into an output file only with its `(from SWA_101 §N)` / `(from SAW_102 §N)` citation intact — never merged into prose indistinguishably from a questionnaire-derived rule. This preserves traceability the same way `write-spec`'s Decision Log traces answers back to technical questions.
+7. Always read `standards/reference/*.md` in the fixed order given in Phase 0b (SWA_101, then SAW_102), and always emit the Wiring instruction's file list in the fixed order given above (architecture, coding, documentation) — never let either be determined by a directory listing. A stable read/emit order is what lets prompt caching engage across runs.
