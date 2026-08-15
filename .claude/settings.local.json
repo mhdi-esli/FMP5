@@ -33,7 +33,12 @@
       "Bash(mvn -v)",
       "Bash(mvn -q -DskipTests compile)",
       "Bash(./mvnw dependency:tree)",
-      "Bash(mvn -o test -Dtest='InstitutionControllerTest,InstitutionServiceTest,MessageControllerInstitutionValidationTest' -DfailIfNoTests=false)"
+      "Bash(mvn -o test -Dtest='InstitutionControllerTest,InstitutionServiceTest,MessageControllerInstitutionValidationTest' -DfailIfNoTests=false)",
+      "Bash(awk ' *)",
+      "Bash(awk '/^## [0-9]/{q++;r=0} /← recommended/{if\\(q>0\\)rc++} END{print \"questions=\"q\" ; recommended-in-questions=\"rc}' references/domain_question_bank.md)",
+      "Read(//tmp/bs-test/**)",
+      "Bash(sed -i -e 's/required = '\\\\''\\(required\\)'\\\\'' in head/required = '\\\\''required'\\\\'' in head.lower\\(\\)/' -e 's/select_all = '\\\\''\\(select all that apply\\)'\\\\'' in head/select_all = '\\\\''select all'\\\\'' in head.lower\\(\\)/' check.py)",
+      "Bash(python3 check.py)"
     ]
   },
   "hooks": {
