@@ -28,8 +28,26 @@
 - 
 
 ## Non-Goals
-<!-- Explicitly out of scope for this epic — prevents scope creep. -->
+<!-- Explicitly out of scope for this initiative — prevents scope creep. -->
 - 
+
+## Epic Breakdown
+<!-- The unit write-spec and plan-tasks operate on. Each epic gets a stable
+     EPIC-NN id and a title after the colon; write-spec derives its <epic-slug>
+     from the two ("EPIC-02: Message Validation" → epic-02-message-validation) and
+     reads ONLY the requirement/AC IDs tagged to the epic it was invoked on, never
+     the whole PRD. So every FR-/NFR-/SEC-/CMP-/AC- id defined in the sections
+     below must be claimed by at least one epic here. Keep the "EPIC-NN: Title"
+     heading shape exactly — the slug derivation depends on the colon. -->
+
+### EPIC-01: <Epic Title>
+<!-- One line on this epic's scope. -->
+**Requirements:** <FR-/NFR-/SEC-/CMP- ids from the sections below, comma-separated>
+**Acceptance Criteria:** <AC- ids from the section below>
+
+### EPIC-02: <Epic Title>
+**Requirements:** 
+**Acceptance Criteria:** 
 
 ## Stakeholders
 | Stakeholder | Interest / Responsibility |

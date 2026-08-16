@@ -32,6 +32,12 @@ Follow their conventions if they exist. If any are missing, proceed but add a no
 3. Read only the requirements and acceptance criteria tagged to that epic — not the whole PRD
 4. Note the PRD's Confidence Level in the spec header for traceability, but do not block on it — a spec can legitimately surface gaps the PRD didn't catch
 
+Everything above — the three shared standards and the approved PRD — is the **stable prompt prefix**: it changes rarely, so reading it in this fixed order keeps the prefix identical across runs and lets prompt caching engage.
+
+**--- CACHE BOUNDARY — read the per-run-changing input below only after the stable prefix above ---**
+
+5. Derive `<epic-slug>` (rule below), then read `specs/<epic-slug>/spec.md` **if it already exists**. Its presence means this is a re-run/update, not a first draft — handle it per Phase 2 and preserve any human edits. If it's absent, this is a first-time generation.
+
 ### Phase 1 — Draft
 
 Generate the spec with these required sections:
@@ -165,6 +171,7 @@ Impact: (high-impact)
 7. Never introduce facts/libraries/SLAs that don't trace to requirements, PRD, answered question, or platform convention — add Technical Question instead
 8. Never derive epic slug any other way than the rule above
 9. Never create a second output folder for an epic that already has one
+10. Never let Iteration History grow unbounded — when an epic's spec exceeds ~15 entries, collapse everything older than the 5 most recent into one summary line (`entries 1–N collapsed — net effect: …`); never collapse the 5 most recent, and never touch the Decision Log while trimming
 
 ## Exit Criteria
 
