@@ -60,7 +60,7 @@ Free-text (required): name the exact systems/rails in scope for launch _________
 [ ] Cross-border SWIFT
 [ ] Additional domestic rails
 [ ] Instant payments
-[ ] None — everything is launch scope
+[ ] None — everything is launch scope (exclusive)
 Free-text (optional): ______________________________________
 
 ## 5. What is the expected message volume? (select one, required)
@@ -106,7 +106,7 @@ Free-text (required): which jurisdiction(s) / regulator(s) _____________________
 [ ] Domestic RTGS / ACH formats (e.g. Iran SATNA / PAYA) ← recommended
 [ ] National ISO 20022 variant / local usage guidelines
 [ ] Proprietary core-banking host format
-[ ] None — SWIFT standards only
+[ ] None — SWIFT standards only (exclusive)
 Free-text (required): name the exact formats / specification versions ______________________________________
 
 ## 4. What is the canonical internal representation? (select one, required)
@@ -157,7 +157,7 @@ Free-text (optional): specific platform / region constraints ___________________
 [ ] Immutable, append-only message store ← recommended
 [ ] Replay by correlation / business identifier
 [ ] Point-in-time state reconstruction
-[ ] No replay — fire-and-forget
+[ ] No replay — fire-and-forget (exclusive)
 
 ## 5. What are the HA / DR targets? (select one, required)
 [ ] Active-active across sites ← recommended
@@ -240,7 +240,7 @@ Free-text (optional): ______________________________________
 [ ] End-of-day reconciliation against the network ← recommended
 [ ] Real-time positional reconciliation
 [ ] Nostro / settlement reconciliation
-[ ] None
+[ ] None (exclusive)
 
 ## 3. How are retries and undeliverable messages handled? (select one, required)
 [ ] Bounded retries + dead-letter queue with manual replay ← recommended
@@ -278,7 +278,7 @@ Free-text (optional): escalation ownership _____________________________________
 Free-text (optional): ______________________________________
 
 ## 2. Where do coding standards come from? (select one, required)
-[ ] This repo's `/standards/*.md`, maintained via the set-standards skill ← recommended
+[ ] This repo's `.claude/_architecture-reference.md`, `_coding-guidelines.md`, and `_documentation-standards.md`, maintained via set-standards ← recommended
 [ ] An external corporate style guide
 [ ] Ad-hoc / PR review only
 Free-text (optional): ______________________________________

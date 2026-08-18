@@ -38,17 +38,48 @@ No UX/design reference by default — drop it unless the project has an actual u
 
 ## Workflow — state machine
 
+### Dispatch — select the current phase
+
+Every invocation starts with Phase 0 and then Phase 0b. After those checks,
+select exactly one continuation:
+
+1. If either questionnaire is missing, run Phase 1 for only the missing file(s),
+   then stop.
+2. If both questionnaires exist, run Phase 2.
+3. If Phase 2 reports any required unanswered, ambiguous, or malformed answer,
+   stop without generating or updating reference documents.
+4. Only when Phase 2 passes, run Phase 3.
+
+Do not regenerate an existing questionnaire merely because the other one is
+missing, and do not chain a Phase 1 creation directly into Phase 2 in the same
+invocation. This is an asynchronous, file-based workflow.
+
 ### Phase 0 — Seed check (runs first, every invocation)
 
 If `brainstorm/Epic_PRD.md` exists and has a populated Agentic Decisions section (implementation stack, testing strategy, CI/CD approach, ADR practice, branching strategy): note which answers can be legitimately carried over. This is different from a recommendation — it's citing a decision that already went through human confirmation in `brainstorm`, so it's fine to pre-fill it as an actual answer (not a recommended-but-unchecked option), clearly labeled `(carried over from Epic_PRD.md)` so it's visibly distinct from a fresh suggestion.
 
 ### Phase 0b — External standards check (runs once, after Phase 0)
 
-If `standards/reference/*.md` files are present, treat them as a third legitimate source, same epistemic standing as a PRD carryover — not agent judgment, not a recommendation, an already-authorized policy document. Rules that trace to these files are pre-filled as confirmed content, labeled `(from SWA_101 §N)` / `(from SAW_102 §N)`, never presented as a questionnaire option or `← recommended` suggestion.
+Check the two exact paths below in this fixed order on every invocation; never use
+a glob or directory listing to discover or order them:
 
-Read the two source files in this fixed order, always — never directory-listing order: `SWA_101-comm-standards.md`, then `SAW_102-arch-doc-standards.md`. This isn't arbitrary — it keeps the prompt prefix identical run to run so prompt caching engages on this (the most expensive, longest-lived) input.
+1. `standards/reference/SWA_101-comm-standards.md`
+2. `standards/reference/SAW_102-arch-doc-standards.md`
 
-Do not inline the full source documents into the ~150-line output files — extract only the specific enforceable rules relevant to each file's scope, and link back to the full source: `See standards/reference/SWA_101-comm-standards.md for the complete standard.` This keeps the 150-line cap intact while the full text stays available as ground truth if a later skill needs to check something not summarized.
+Read each file if it exists. Treat its content as a third legitimate source,
+with the same epistemic standing as a PRD carryover — not agent judgment, not a
+recommendation, but already-authorized policy. Rules traced to these files are
+confirmed content labeled `(from SWA_101 §N)` / `(from SAW_102 §N)`; never turn
+them into questionnaire choices or `← recommended` suggestions. A missing file
+contributes no rules and is not a questionnaire-gate failure.
+
+Do not inline a full source document into the ~150-line outputs. Extract only
+specific enforceable rules relevant to each output's scope. Every output that
+uses SWA_101 content must include:
+`See standards/reference/SWA_101-comm-standards.md for the complete standard.`
+Every output that uses SAW_102 content must include the corresponding link to
+`standards/reference/SAW_102-arch-doc-standards.md`. This keeps the line cap
+intact while preserving full ground truth.
 
 **Routing (section-level, not whole-document):**
 - `_architecture-reference.md` ← SWA_101 §9 Security, §10 Distributed Tracing, §11 Protocol Selection, and the channel-naming-convention part of §7 only (these shape system topology / integration contracts and would warrant an ADR if changed).
@@ -57,33 +88,118 @@ Do not inline the full source documents into the ~150-line output files — extr
 
 ### Phase 1 — Generate questionnaires (if not yet created)
 
-Create `standards/00_Architecture_Questionnaire.md` covering: architecture style (Layered / Hexagonal — Ports & Adapters / Clean Architecture / Modular Monolith), module boundaries, dependency-direction rules, and any cross-cutting decision not already captured in the PRD.
+Create only the missing questionnaire file(s).
 
-Create `standards/00_Coding_Guidelines_Questionnaire.md` covering: naming conventions, package structure, testing-pyramid targets, code review/PR conventions, static analysis/linting tools, documentation conventions.
+Create `standards/00_Architecture_Questionnaire.md` covering: architecture style
+(Layered / Hexagonal — Ports & Adapters / Clean Architecture / Modular Monolith),
+module boundaries, dependency-direction rules, and cross-cutting decisions not
+already captured in the PRD or external standards.
 
-Follow the exact same formatting rules as `brainstorm`: 2-5 options, `(select one)`/`(select all that apply)`, `(required)`/`(optional)`, exactly one `← recommended` label as text (never pre-checked, except for genuinely carried-over prior decisions as described in Phase 0), always `[ ]` never `[]`.
+Create `standards/00_Coding_Guidelines_Questionnaire.md` covering: naming
+conventions, package structure, testing-pyramid targets, code review/PR
+conventions, static analysis/linting tools, and documentation conventions not
+already settled by the PRD or external standards.
 
-Stop. Tell the user which files were created and that the skill will wait for them to be filled in.
+Follow the same question shape as `brainstorm`: every question has 2–5 options
+and one parenthetical combining mode and necessity, such as `(select one,
+required)` or `(select all that apply, optional)`. Exactly one option carries
+`← recommended` as text unless the question is already settled by a genuine
+Phase-0 carryover. Fresh questions always use `[ ]`, never `[]` or `[x]`.
+
+For a genuine carryover, pre-fill the corresponding answer as `[x]` and append
+`(carried over from Epic_PRD.md)` to that option. It is the only pre-check
+exception and is an actual answer, not a recommendation. Do not also label a
+different option recommended. Omit questions whose only possible purpose would
+be to reconfirm an external standard; place those cited rules directly into the
+Phase 3 output instead.
+
+Stop. Tell the user exactly which files were created and that the skill will
+wait for them to fill in or review the questionnaires and re-invoke it.
 
 ### Phase 2 — Answer gate
 
-Identical rules to `brainstorm`: a select-one question is answered only with exactly one `[x]`; two or more is ambiguous, report separately; a malformed checkbox (`[]`) is unanswered and flagged separately; a recommended label is never treated as an answer unless it's a Phase-0 carryover, explicitly labeled as such. Stop and report if anything required is unanswered, ambiguous, or malformed.
+Read the architecture questionnaire first and coding questionnaire second.
+Parse each required question literally:
+
+- `select one` is answered only with exactly one `[x]`; two or more is
+  ambiguous.
+- `select all that apply` is answered with at least one `[x]`.
+- Any checkbox other than `[ ]` or lowercase `[x]`, including `[]` or `[X]`, is
+  malformed. Record the question as malformed even if another valid box is
+  checked; do not silently normalize it.
+- A recommendation label is never an answer.
+- A checked answer explicitly labeled `(carried over from Epic_PRD.md)` is a
+  valid Phase-0 carryover answer.
+- Required free text is answered only by real non-placeholder content. A
+  selected `Other` with blank text is unanswered.
+
+Partition required questions into answered, unanswered, ambiguous, and
+malformed. Stop and report every problem grouped by questionnaire and category
+if any required answer is unanswered, ambiguous, or malformed. Optional gaps do
+not block Phase 3; carry them into Open Issues. Never select or repair an answer
+for the user.
 
 ### Phase 3 — Generate/update the reference documents
 
-Step 1 — Generate content strictly from confirmed answers (checked options, carried-over decisions, Phase 0b external-standards citations, or free-text fields). Never add a convention, pattern, or rule that wasn't actually confirmed — if a section would read better with a detail nobody decided, write `[TBD — needs input]` and list it under Open Issues instead.
+Step 1 — Generate content strictly from confirmed answers (checked options,
+carried-over decisions, Phase 0b external-standards citations, or filled
+free-text fields). Never add a convention, pattern, or rule that was not
+confirmed. If a required section needs an undecided detail, write
+`[TBD — needs input]` and repeat the gap under Open Issues.
 
-Step 2 — Compute:
-```
-completeness = (answered required questions / total required questions) × 100
-```
-Report it plainly, per document. Not a gate — a low score with clear Open Issues is a legitimate, useful output, same as everywhere else in this pipeline.
+Route questionnaire answers by the document they govern. Architecture
+questionnaire answers contribute to `_architecture-reference.md`; coding
+questionnaire answers contribute to `_coding-guidelines.md`. Documentation
+standards sourced from SAW_102 contribute to `_documentation-standards.md`.
+If a questionnaire question explicitly governs documentation policy, count and
+route it to the documentation document rather than counting it twice. Record
+applicable cross-cutting carryovers only in the document(s) they actually govern.
 
-**Update vs. rewrite** (if the reference files already exist): preserve any content a human added directly, compare against an embedded version marker, append a dated Iteration History entry describing what changed, update the marker. Standards evolve — this isn't a one-shot file.
+Step 2 — Compute completeness separately for each document:
+
+```
+completeness = round(
+  answered required questions routed to this document
+  / total required questions routed to this document
+  × 100
+)
+```
+
+The documentation document's denominator is the number of required
+questionnaire questions explicitly routed to documentation; externally sourced
+SAW_102 sections are authoritative inputs, not questionnaire questions, so they
+are not counted in numerator or denominator. If no required questionnaire
+question is routed to a document, report `Completeness: N/A — 0 required
+questionnaire questions apply; content is sourced from confirmed external
+standards/carryovers.` Do not invent `100%` for a zero denominator. Include the
+numerator, denominator, percentage (or N/A), and reason for shortfall in each
+file. Optional unanswered questions remain Open Issues but do not affect the
+score.
+
+Because Phase 2 gates Phase 3 on required answers, a below-100 questionnaire
+score during generation indicates a parsing/routing defect; do not paper it over.
+Completeness remains informational and is never a threshold gate.
+
+**Update vs. rewrite** — every generated file begins with a deterministic marker:
+
+`<!-- generated from standards state: <fingerprint> -->`
+
+Build `<fingerprint>` from the fixed-order checked-answer positions, filled
+free-text values, carried-over answer identifiers, and cited external source
+section identifiers. Do not use timestamps or randomness. If a reference file
+already exists, read it before editing, compare its marker and generated
+sections, preserve human-authored content and unaffected wording, and update
+only answer/source-driven content. Append a dated Iteration History entry only
+for a substantive change, describing the actual changed decisions or sources;
+do not append when state and generated content are unchanged. Then update the
+marker. Never use the marker alone as permission to overwrite the file.
 
 ## Required Sections (all three documents)
 
 ### `.claude/_architecture-reference.md`
+
+Begin with the version marker and a **Completeness** line using Phase 3's
+per-document calculation.
 
 Sections:
 - **System Architecture** — top-level style and major components
@@ -98,6 +214,9 @@ Keep under ~150 lines — reference material an agent reliably reads in full, no
 
 ### `.claude/_coding-guidelines.md`
 
+Begin with the version marker and a **Completeness** line using Phase 3's
+per-document calculation.
+
 Sections:
 - **Coding Standards** — language-specific conventions
 - **Naming Conventions** — classes, methods, variables, packages
@@ -109,6 +228,11 @@ Sections:
 Same length cap.
 
 ### `.claude/_documentation-standards.md`
+
+Begin with the version marker and a **Completeness** line using Phase 3's
+per-document calculation. If SAW_102 is absent and no confirmed questionnaire or
+carryover answer supplies a section, retain the section with `[TBD — needs
+input]` and list the missing source/decision under Open Issues.
 
 Sections:
 - **Required Artifacts** — by product type
@@ -147,9 +271,12 @@ Done when both questionnaires (where required) are fully answered or explicitly 
 ## Hard Rules
 
 1. Never write a coding convention or architecture rule into any of the three documents unless it traces to a confirmed answer, a carried-over prior decision, a Phase 0b external-standards citation, or explicit free text — never the agent's own judgment presented as settled policy.
-2. Never pre-check a recommended option — the only exception is a Phase-0 carryover from `Epic_PRD.md`, and that must be visibly labeled as a carryover, never indistinguishable from a fresh recommendation.
+2. Never pre-check a fresh recommended option. The only pre-check exception is a Phase-0 carryover from `Epic_PRD.md`; label it `(carried over from Epic_PRD.md)` and treat it as a confirmed answer, not as a recommendation.
 3. Never fabricate the completeness score — compute it from the parsed questionnaire files, per document.
 4. Never silently rewrite a human-edited reference document — preserve non-generated content and log what changed.
 5. Always write unchecked boxes as `[ ]` — never `[]`.
 6. A rule sourced from `standards/reference/*.md` is written into an output file only with its `(from SWA_101 §N)` / `(from SAW_102 §N)` citation intact — never merged into prose indistinguishably from a questionnaire-derived rule. This preserves traceability the same way `write-spec`'s Decision Log traces answers back to technical questions.
-7. Always read `standards/reference/*.md` in the fixed order given in Phase 0b (SWA_101, then SAW_102), and always emit the Wiring instruction's file list in the fixed order given above (architecture, coding, documentation) — never let either be determined by a directory listing. A stable read/emit order is what lets prompt caching engage across runs.
+7. Always check/read the two exact source paths in Phase 0b order (SWA_101, then SAW_102), and always emit the Wiring list in architecture → coding → documentation order. Never let either order come from a glob or directory listing.
+8. Never generate reference documents in the same invocation that creates a missing questionnaire; stop for human review first.
+9. Never treat external-standard rules as questionnaire questions or count them in completeness arithmetic.
+10. Never overwrite human-authored reference content based only on a changed version marker; reconcile source-driven sections and log substantive changes.

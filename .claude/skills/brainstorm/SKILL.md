@@ -45,9 +45,9 @@ Two separate locations — do not conflate them:
    - **Any body file present** (a `*Questionnaire*.md` other than the scope
      file) → **Phase 2**. If its gate passes → **Phase 3**.
 
-Each phase does its work and STOPS with a clear hand-back to the user. This is
-an asynchronous cycle — never chain phases past a stop, and never answer a
-question yourself to keep moving.
+Phases 0 and 1 always STOP with a clear hand-back. Phase 2 stops when its gate
+finds a problem; when the gate passes, it continues directly to Phase 3 in the
+same invocation. Never answer a question yourself to keep moving.
 
 ---
 
@@ -58,12 +58,18 @@ Create `brainstorm/00_Scope_Questionnaire.md` with exactly ONE question:
 ```
 # Scope
 
+<!-- Initiative brief: <copy the user's one-line description verbatim> -->
+
 ## 1. What's the scale of this initiative? (select one, required)
 [ ] Single feature
 [ ] Medium product initiative
 [ ] Large / enterprise platform
 [ ] Multi-year program
 ```
+
+The initiative-brief comment is metadata, not another question. It preserves the
+input across separate sessions so Phase 1 can adapt the question bank without
+relying on conversation history.
 
 - Append `← recommended` to exactly one option, chosen from the user's one-line
   idea. A hub described as "universal", spanning multiple institutions,
@@ -88,48 +94,70 @@ its copy rules. Then branch on the chosen scale:
   `03_Architecture_Questionnaire.md`, `04_Security_Compliance_Questionnaire.md`,
   `05_Operations_Questionnaire.md`, `06_Agentic_Decisions_Questionnaire.md`.
 
-Adapt the seed questions to the specific idea (add a clearly-needed question,
-drop a plainly-irrelevant one, re-judge each `← recommended`), but keep every
-formatting rule below intact. Stop. Tell the user which file(s) were created and
-that the skill will wait for them to be filled in, then re-invoked.
+Adapt the seed questions to the initiative brief stored in the scope file (add
+a clearly-needed question, drop a plainly-irrelevant one, re-judge each
+`← recommended`), but keep every formatting rule below intact. For a combined
+single/medium questionnaire, retain all six domain headings; a domain with no
+substantive decisions may contain one concise applicability question instead of
+irrelevant platform-level detail. Stop. Tell the user which file(s) were created
+and that the skill will wait for them to be filled in, then re-invoked.
 
 ## Phase 2 — Answer gate
 
-Read every questionnaire file in the fixed numeric order from Dispatch. Parse
-each question with the answer-parsing rules below. Then partition mandatory
-(`(required)`) questions into: **answered**, **ambiguous**, **incomplete**,
+Read every questionnaire file in the fixed numeric order from Dispatch. First
+parse the scope answer and verify the expected body exists: exactly
+`Questionnaire.md` for Single/Medium scope, or all six numbered domain files for
+Large/Multi-year scope. A missing or mixed body is **incomplete** and blocks the
+gate; report the expected and present files rather than generating a partial PRD.
+Parse every required and optional question with the answer-parsing rules below,
+partitioning each into **answered**, **ambiguous**, **incomplete**, or
 **unanswered**.
 
-- If any mandatory question is **unanswered, ambiguous, or incomplete**: STOP.
+- If any mandatory question or expected file is **unanswered, ambiguous, or incomplete**: STOP.
   Report the full list grouped by file → section, keeping the three problem
   buckets separate so the user knows whether to *fix* (ambiguous/incomplete) or
   *finish* (unanswered) each one. Do not proceed to Phase 3. Do not fill in an
   answer yourself — not even an "obviously recommended" one.
 - If every mandatory question is answered → proceed to **Phase 3**.
 
-(Optional questions never block the gate, but note unanswered ones — they become
-Open Issues in Phase 3.)
+Optional questions never block the gate. Carry every optional unanswered,
+ambiguous, or incomplete item into Open Issues with its exact problem state.
 
 ## Phase 3 — Generate / update the PRD
 
 Runs only when Phase 2's gate passed for every mandatory question.
 
 1. Load `references/epic_prd_template.md`. Populate every section from the
-   parsed answers. Give each requirement a stable ID (BR-/FR-/NFR-/SEC-/CMP-/AC-).
-2. **Decision Log:** for every question whose selected answer differs from its
+   parsed answers and retain its `brainstorm:generated` ownership markers. Every
+   generated requirement, constraint, criterion, risk, and assumption must end
+   with an HTML provenance comment naming its source file and question, e.g.
+   `<!-- source: 03_Architecture_Questionnaire.md §6 -->`. Give each requirement
+   a stable ID (BR-/FR-/NFR-/SEC-/CMP-/AC-). On update, reuse each unchanged
+   requirement's ID. Store a per-prefix ID high-water mark in the top metadata
+   comment; allocate above it and never lower it, so retired IDs are never reused.
+2. **Risks:** create a risk row only from a concrete human answer or an explicit
+   unresolved item in the questionnaire. Cite its source question in the risk
+   text or mitigation. Do not invent a risk, impact, or status. A risk counts as
+   `high/open` only when the human-provided text or selected option explicitly
+   establishes both classifications; otherwise record it as an Open Issue that
+   does not affect Confidence.
+3. **Decision Log:** for every question whose selected answer differs from its
    labeled `← recommended` option, add a row — the question (file § number), the
-   recommendation, the choice made, and why it matters. (Questions with no
-   recommendation, or where the user picked the recommendation, add no row.)
-3. **Confidence Level:** compute it per the formula below — never assert a number.
-4. **Open Issues:** list every gap that holds confidence below 100% — each open
-   high-impact risk, each unanswered optional question, each load-bearing
-   unconfirmed assumption. Confidence < 90% does **not** block generation; it is
-   reported, with the shortfall itemized here.
-5. Compute the version marker signature and write it into the top-of-file HTML
-   comment.
-6. Write `brainstorm/Epic_PRD.md` — via the **update rules** below if it already
+   recommendation, the choice made, and why it matters. For select-all questions,
+   divergence means the checked set is not exactly the singleton recommended
+   option; recommendation plus extras is therefore a logged divergence. Questions
+   with no recommendation, or whose selected set exactly matches it, add no row.
+4. **Confidence Level:** compute it per the formula below — never assert a number.
+5. **Open Issues:** list every unresolved gap: each open high-impact risk, each
+   unanswered optional question, and each load-bearing unconfirmed assumption.
+   Distinguish formula deductions from informational gaps; optional omissions and
+   assumptions do not lower Confidence unless represented by an explicit
+   high/open risk. Confidence < 90% does **not** block generation.
+6. Compute the canonical answer-state marker and write it into the top-of-file
+   HTML metadata comment together with the requirement-ID high-water marks.
+7. Write `brainstorm/Epic_PRD.md` — via the **update rules** below if it already
    exists.
-7. Report the computed Confidence Level and where the file was written.
+8. Report the computed Confidence Level and where the file was written.
 
 ---
 
@@ -163,7 +191,11 @@ Which ISO 20022 (MX) message families must the platform support at launch? (sele
 - **select one** — answered iff **exactly one** box is `[x]`. Two or more checked
   → **ambiguous** (never resolve it yourself). Zero checked → **unanswered**.
 - **select all that apply** — answered iff **at least one** box is `[x]`. Zero
-  → **unanswered**.
+  → **unanswered**. An option labeled `exclusive` (for example `None`) may not be
+  checked with any other option; such a combination is **ambiguous**.
+- **Conditional detail:** when an option says to specify/name/quantify something
+  in a free-text line, that line is required if the option is checked even when
+  the line is otherwise labeled optional; checked-but-blank is **incomplete**.
 - A `← recommended` label is never a checkbox. An untouched recommendation is
   **not** an answer.
 - A malformed box (anything other than `[ ]` or `[x]`, e.g. `[]`, `[X ]`) counts
@@ -196,30 +228,43 @@ bug in the gate, not something to paper over. Report as
 
 ## Version marker & update rules
 
-- **Signature:** a deterministic fingerprint of the *answer set* — sensitive to
-  *which* options are checked, not just how many, so swapping one answer for
-  another changes it (a bare total would not). Practical encoding: for each
-  required question in fixed file/number order, append the checked option
-  position(s) plus a `+` if a required free-text is filled, e.g.
-  `1a·2ac·3b+…`; record that string (or a short checksum of it) as the
-  signature. No timestamps or randomness — an unchanged answer set yields the
-  same signature.
-- Write it into the top HTML comment:
-  `<!-- generated from questionnaire state: <fingerprint> -->`.
+- **Canonical answer state:** for every required and optional question in fixed
+  file/question order, encode the file, question number, checked option
+  position(s), and every normalized free-text value (trim outer whitespace,
+  collapse internal whitespace, preserve text and numbers). Include an explicit
+  empty marker for unanswered optional inputs. Store this complete canonical
+  state in a top-of-file HTML metadata comment so an update can compare old and
+  new values; do not store only an irreversible checksum. No timestamps or
+  randomness — an unchanged answer set yields identical metadata, while changing
+  an SLA, named rail, optional answer, or selected option changes it.
+- Use one comment in this shape (JSON may be compacted):
+  `<!-- brainstorm:state {"answers": {...}, "idHighWater":{"BR":3,"FR":8,"NFR":4,"SEC":2,"CMP":2,"AC":9}} -->`.
+- **Generated ownership markers:** wrap each answer-derived section in stable
+  markers such as `<!-- brainstorm:generated:Functional Requirements:start -->`
+  and `<!-- brainstorm:generated:Functional Requirements:end -->`. Human content
+  outside these regions is never generated and must remain byte-for-byte intact.
+  Inside a generated region, preserve prose or requirements that have no source
+  in the current questionnaire; treat them as human additions. Replace or remove
+  only entries whose cited source answer changed, and append newly derived entries.
 - **If `Epic_PRD.md` already exists, this is an UPDATE, not a rewrite:**
-  1. Read the existing file, including its stored signature.
-  2. **Preserve any content a human added** that does not derive from a
+  1. Read the existing file, including its canonical answer state, ID high-water
+     marks, and generated markers.
+  2. **Preserve any content a human added** that does not derive from a changed
      questionnaire answer — extra prose, hand-written requirements, edited
-     wording. Refresh only what the answers drive; never clobber human edits.
-  3. Recompute the signature. If it equals the stored one AND the regenerated
-     sections match what's on disk, the answers are unchanged — say so and make
-     no substantive edit.
-  4. Otherwise, append a dated entry (newest first) to **Iteration History**
-     describing what changed — derive the description by comparing the
-     regenerated sections against the existing ones (which requirements/answers
-     moved), not from the fingerprint alone. Use today's date from the
-     environment context. Never rewrite existing Iteration History or Decision
-     Log entries — only append.
+     wording. If provenance is unclear, preserve the content and flag it in Open
+     Issues rather than clobbering it.
+  3. Recompute the canonical answer state. If it equals the stored one, the
+     answers are unchanged — make no substantive edit, even if generated wording
+     could be rephrased.
+  4. Otherwise, update only content directly affected by changed answers. Append
+     a dated entry (newest first) to **Iteration History** describing which
+     answers and derived requirements changed by comparing old and new canonical
+     answer values. Insert the new history entry immediately below the Iteration
+     History heading (newest first), leaving all older entries untouched. Use
+     today's date from the environment context.
+  5. Treat Decision Log as historical. When a prior divergence changes or returns
+     to the recommendation, insert a new dated row that explicitly supersedes or
+     reverts the earlier row; never delete historical rows.
 
 ---
 
@@ -244,9 +289,9 @@ bug in the gate, not something to paper over. Report as
 A run is done when **either**:
 - a questionnaire was created/left for the user and the run stopped with a clear
   hand-back (Phase 0, Phase 1, or a Phase 2 gate that found gaps); **or**
-- every mandatory question across every file is answered (or explicitly flagged
-  back to the user), and `brainstorm/Epic_PRD.md` has been generated/updated with
-  an accurate, computed Confidence Level.
+- every mandatory question across every expected file is answered, and
+  `brainstorm/Epic_PRD.md` has been generated/updated with an accurate, computed
+  Confidence Level.
 
 Crossing 90% confidence is **reported, not required** — an honest 70% PRD that
 itemizes its gaps under Open Issues is a valid, complete run.
