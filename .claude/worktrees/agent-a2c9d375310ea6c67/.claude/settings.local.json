@@ -1,0 +1,85 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm config *)",
+      "Bash(mvn test *)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git config *)",
+      "Bash(git remote *)",
+      "Bash(mvn --version)",
+      "Bash(java --version)",
+      "Bash(apt list *)",
+      "Bash(java -version)",
+      "Bash(find / -name \"mvnw\")",
+      "Bash(apt-get update *)",
+      "Bash(apt-get install *)",
+      "Bash(sudo apt-get install -y -qq maven)",
+      "Bash(sed -i 's/messageDefinitionRepository\\\\.findByMessageTypeAndNetworkAndIsActiveTrue/messageDefinitionService.findActiveDefinition/g' /workspace/fmp5/src/test/java/com/bank/messaging/service/MessageCreationServiceTest.java)",
+      "Bash(sed -i 's/messageDefinitionRepository\\\\.findByMessageTypeAndNetwork/messageDefinitionService.findDefinition/g' /workspace/fmp5/src/test/java/com/bank/messaging/service/MessageCreationServiceTest.java)",
+      "Bash(git restore *)",
+      "Bash(docker *)",
+      "Bash(export JAVA_HOME=/opt/java/openjdk)",
+      "Bash(/opt/maven/bin/mvn -q -o test)",
+      "Bash(mvn -version)",
+      "Bash(echo \"---exit:$?---\")",
+      "Bash(nohup dockerd)",
+      "Bash(git stash *)",
+      "Bash(PGPASSWORD=1234 psql *)",
+      "Bash(gh pr *)",
+      "Bash(gh issue *)",
+      "Bash(mvn -q -o test *)",
+      "Bash(mvn -v)",
+      "Bash(mvn -q -DskipTests compile)",
+      "Bash(./mvnw dependency:tree)",
+      "Bash(mvn -o test -Dtest='InstitutionControllerTest,InstitutionServiceTest,MessageControllerInstitutionValidationTest' -DfailIfNoTests=false)",
+      "Bash(awk ' *)",
+      "Bash(awk '/^## [0-9]/{q++;r=0} /← recommended/{if\\(q>0\\)rc++} END{print \"questions=\"q\" ; recommended-in-questions=\"rc}' references/domain_question_bank.md)",
+      "Read(//tmp/bs-test/**)",
+      "Bash(sed -i -e 's/required = '\\\\''\\(required\\)'\\\\'' in head/required = '\\\\''required'\\\\'' in head.lower\\(\\)/' -e 's/select_all = '\\\\''\\(select all that apply\\)'\\\\'' in head/select_all = '\\\\''select all'\\\\'' in head.lower\\(\\)/' check.py)",
+      "Bash(python3 check.py)",
+      "Skill(claude-api)",
+      "Skill(update-config)",
+      "Bash(python3 -m json.tool .claude/settings.local.json)",
+      "Bash(claude mcp *)",
+      "Bash(env)",
+      "Bash(python3 *)",
+      "Bash(claude *)"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "jira"
+  ],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./.claude/hooks/check-large-file.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./.claude/hooks/warn-growing-docs.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./.claude/hooks/check-cat-bypass.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
