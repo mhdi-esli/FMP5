@@ -79,7 +79,11 @@
       "Bash(git -C /home/m.esmaeily/src/java/ai/FMP5/.claude/worktrees/agent-a69158be86aba8359 log --oneline --all -- specs/epic-01-message-creation-service/spec.md)",
       "Bash(git -C /home/m.esmaeily/src/java/ai/FMP5/.claude/worktrees/agent-a69158be86aba8359 branch -a)",
       "Bash(git -C /home/m.esmaeily/src/java/ai/FMP5/.claude/worktrees/agent-a69158be86aba8359 log --all --oneline --decorate -20)",
-      "Bash(git ls-tree *)"
+      "Bash(git ls-tree *)",
+      "Bash(env -u GIT_DIR -u GIT_WORK_TREE git -C \"/workspace/FMP5\" diff --check -- \"specs/epic-01-message-creation-service/tasks.md\")",
+      "Bash(env -u GIT_DIR -u GIT_WORK_TREE git -C \"/workspace/FMP5\" status --short -- \"specs/epic-01-message-creation-service/tasks.md\")",
+      "Bash(GIT_DIR=\"/workspace/FMP5/.git\" GIT_WORK_TREE=\"/workspace/FMP5\" git diff --check -- \"specs/epic-01-message-creation-service/tasks.md\")",
+      "Bash(GIT_DIR=\"/workspace/FMP5/.git\" GIT_WORK_TREE=\"/workspace/FMP5\" git status --short -- \"specs/epic-01-message-creation-service/tasks.md\")"
     ]
   },
   "enabledMcpjsonServers": [
