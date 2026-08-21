@@ -74,7 +74,12 @@
       "Bash(git -C \"/workspace/FMP5/.claude/worktrees/agent-a2c9d375310ea6c67\" show e704126:.claude/skills/plan-tasks/SKILL.md)",
       "Bash(git -C \"/workspace/FMP5/.claude/worktrees/agent-a2c9d375310ea6c67\" log --all --format='%H %s' -- .claude/skills/brainstorm)",
       "Bash(git -C \"/workspace/FMP5/.claude/worktrees/agent-a2c9d375310ea6c67\" log --all -S'check.py' --format='%H %s')",
-      "Bash(git -C \"/workspace/FMP5/.claude/worktrees/agent-a2c9d375310ea6c67\" log --all -S'domain_question_bank.md' --format='%H %s')"
+      "Bash(git -C \"/workspace/FMP5/.claude/worktrees/agent-a2c9d375310ea6c67\" log --all -S'domain_question_bank.md' --format='%H %s')",
+      "Bash(git -C /home/m.esmaeily/src/java/ai/FMP5/.claude/worktrees/agent-a69158be86aba8359 status --short)",
+      "Bash(git -C /home/m.esmaeily/src/java/ai/FMP5/.claude/worktrees/agent-a69158be86aba8359 log --oneline --all -- specs/epic-01-message-creation-service/spec.md)",
+      "Bash(git -C /home/m.esmaeily/src/java/ai/FMP5/.claude/worktrees/agent-a69158be86aba8359 branch -a)",
+      "Bash(git -C /home/m.esmaeily/src/java/ai/FMP5/.claude/worktrees/agent-a69158be86aba8359 log --all --oneline --decorate -20)",
+      "Bash(git ls-tree *)"
     ]
   },
   "enabledMcpjsonServers": [
